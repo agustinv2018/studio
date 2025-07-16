@@ -41,14 +41,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "./ui/label";
 
 const formSchema = z.object({
+  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   productType: z.enum(productTypes),
   model: z.string().min(2, "El modelo debe tener al menos 2 caracteres."),
   serialNumber: z.string().min(5, "El número de serie debe tener al menos 5 caracteres."),
   purchaseDate: z.date({
     required_error: "Se requiere una fecha de compra.",
   }),
+  document: z.any().optional(),
 });
 
 type AddAssetDialogProps = {
@@ -61,13 +64,15 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+        name: "",
         model: "",
         serialNumber: "",
     }
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onAddAsset(values);
+    const { document, ...assetData } = values;
+    onAddAsset(assetData);
     onOpenChange(false);
     form.reset();
   }
@@ -83,6 +88,19 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre del activo</FormLabel>
+                  <FormControl>
+                    <Input placeholder="p. ej., Portátil del Equipo de Diseño" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="productType"
@@ -171,6 +189,20 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="document"
+              render={({ field }) => (
+                <FormItem>
+                  <Label>Adjuntar documento</Label>
+                  <Input 
+                    type="file" 
+                    onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
+                  />
                   <FormMessage />
                 </FormItem>
               )}

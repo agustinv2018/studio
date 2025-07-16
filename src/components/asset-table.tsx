@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MoreHorizontal, Bot, Archive, Trash2 } from "lucide-react";
+import { MoreHorizontal, Bot, Archive, Trash2, ArrowDownCircle } from "lucide-react";
 import type { Asset, AssetStatus } from "@/lib/types";
 import { suggestDisposal, type SuggestDisposalOutput } from "@/ai/flows/suggest-disposal";
 import { cn } from "@/lib/utils";
@@ -29,10 +29,13 @@ import {
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
+import { Textarea } from "./ui/textarea";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
 
 type AssetTableProps = {
   assets: Asset[];
-  onUpdateStatus: (assetId: string, status: AssetStatus) => void;
+  onUpdateStatus: (assetId: string, status: AssetStatus, reason?: string) => void;
   onDelete: (assetId: string) => void;
   highlightedRows?: string[];
 };
@@ -41,6 +44,10 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
   const [aiSuggestion, setAiSuggestion] = useState<SuggestDisposalOutput | null>(null);
   const [isSuggestionLoading, setSuggestionLoading] = useState(false);
   const [isAlertOpen, setAlertOpen] = useState(false);
+  const [isDisposalAlertOpen, setIsDisposalAlertOpen] = useState(false);
+  const [disposalReason, setDisposalReason] = useState("");
+  const [assetForDisposal, setAssetForDisposal] = useState<Asset | null>(null);
+
   const { toast } = useToast();
 
   const handleGetAiSuggestion = async (asset: Asset) => {
@@ -64,10 +71,44 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
     }
   };
 
+  const openDisposalDialog = (asset: Asset) => {
+    setAssetForDisposal(asset);
+    setIsDisposalAlertOpen(true);
+  }
+
+  const handleConfirmDisposal = () => {
+    if (assetForDisposal && disposalReason) {
+      onUpdateStatus(assetForDisposal.id, 'De baja', disposalReason);
+      setIsDisposalAlertOpen(false);
+      setDisposalReason("");
+      setAssetForDisposal(null);
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Se requiere un motivo de baja."
+        })
+    }
+  }
+
   const closeAlert = () => {
     setAlertOpen(false);
     setAiSuggestion(null);
   }
+
+  const getStatusVariant = (status: AssetStatus) => {
+    switch (status) {
+      case 'Activo':
+        return 'secondary';
+      case 'Obsoleto':
+        return 'outline';
+      case 'De baja':
+        return 'destructive';
+      default:
+        return 'default';
+    }
+  }
+
 
   return (
     <>
@@ -76,6 +117,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
           <TableHeader>
             <TableRow>
               <TableHead>Estado</TableHead>
+              <TableHead>Nombre</TableHead>
               <TableHead>Tipo de Producto</TableHead>
               <TableHead>Modelo</TableHead>
               <TableHead>Número de Serie</TableHead>
@@ -88,20 +130,21 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
           <TableBody>
             {assets.length > 0 ? (
               assets.map((asset) => (
-                <TableRow key={asset.id} className={cn(highlightedRows.includes(asset.id) && "bg-orange-100 dark:bg-orange-900/30")}>
+                <TableRow key={asset.id} className={cn(highlightedRows.includes(asset.id) && "bg-orange-100 dark:bg-orange-900/30", asset.status === 'De baja' && 'opacity-50')}>
                   <TableCell>
-                    <Badge variant={asset.status === 'Obsoleto' ? 'destructive' : 'secondary'}>
+                    <Badge variant={getStatusVariant(asset.status)}>
                       {asset.status}
                     </Badge>
                   </TableCell>
+                  <TableCell className="font-medium">{asset.name}</TableCell>
                   <TableCell>{asset.productType}</TableCell>
-                  <TableCell className="font-medium">{asset.model}</TableCell>
+                  <TableCell>{asset.model}</TableCell>
                   <TableCell>{asset.serialNumber}</TableCell>
                   <TableCell>{format(asset.purchaseDate, "PPP", { locale: es })}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={asset.status === 'De baja'}>
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Alternar menú</span>
                         </Button>
@@ -117,6 +160,11 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
                           <Archive className="mr-2 h-4 w-4" />
                           Marcar como Obsoleto
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openDisposalDialog(asset)}>
+                            <ArrowDownCircle className="mr-2 h-4 w-4" />
+                            Dar de baja
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => onDelete(asset.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
@@ -128,7 +176,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No se encontraron activos.
                 </TableCell>
               </TableRow>
@@ -179,6 +227,37 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
               </AlertDialogAction>
             )}
           </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDisposalAlertOpen} onOpenChange={setIsDisposalAlertOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Dar de baja activo</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Para dar de baja el activo "{assetForDisposal?.name}", por favor, proporciona un motivo y adjunta el acta de baja.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor="disposalReason">Motivo de baja (obligatorio)</Label>
+                    <Textarea 
+                        id="disposalReason" 
+                        placeholder="Escribe el motivo aquí..." 
+                        value={disposalReason}
+                        onChange={(e) => setDisposalReason(e.target.value)}
+                        rows={3}
+                    />
+                </div>
+                <div className="grid w-full gap-1.5">
+                    <Label htmlFor="disposalDocument">Adjuntar acta de baja</Label>
+                    <Input id="disposalDocument" type="file" />
+                </div>
+            </div>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setIsDisposalAlertOpen(false)}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDisposal}>Confirmar baja</AlertDialogAction>
+            </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>

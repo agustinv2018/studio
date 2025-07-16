@@ -29,6 +29,7 @@ export function DashboardPage() {
   const filteredAssets = useMemo(() => {
     return assets.filter(
       (asset) =>
+        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         asset.productType.toLowerCase().includes(searchTerm.toLowerCase())
@@ -46,7 +47,7 @@ export function DashboardPage() {
     });
   }, [toast]);
   
-  const handleUpdateAssetStatus = useCallback((assetId: string, status: Asset['status']) => {
+  const handleUpdateAssetStatus = useCallback((assetId: string, status: Asset['status'], reason?: string) => {
     setAssets((prev) =>
       prev.map((asset) =>
         asset.id === assetId ? { ...asset, status } : asset
@@ -54,7 +55,7 @@ export function DashboardPage() {
     );
     toast({
       title: "Activo Actualizado",
-      description: `El activo ha sido marcado como ${status}.`,
+      description: `El activo ha sido marcado como ${status}.${reason ? ` Motivo: ${reason}`: ''}`,
     });
   }, [toast]);
 
@@ -102,9 +103,9 @@ export function DashboardPage() {
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button variant="outline" onClick={() => setAiDisposalOpen(true)} className="flex-1 sm:flex-none">
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Eliminación con IA
+                    Sugerir Bajas con IA
                   </Button>
-                  <Button onClick={() => setAddAssetOpen(true)} className="flex-1 sm:flex-none bg-accent text-accent-foreground hover:bg-accent/90">
+                  <Button onClick={() => setAddAssetOpen(true)} className="flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Activo
                   </Button>
@@ -117,7 +118,7 @@ export function DashboardPage() {
               <div className="mb-4 rounded-lg border border-orange-300 bg-orange-50 p-4 text-sm text-orange-800 flex items-center justify-between">
                 <p>
                   <Sparkles className="inline-block mr-2 h-4 w-4" />
-                  La IA sugiere eliminar <strong>{suggestedForDisposal.length}</strong> activos.
+                  La IA sugiere marcar <strong>{suggestedForDisposal.length}</strong> activos como obsoletos.
                 </p>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleBulkUpdateStatus}>Marcar como Obsoleto</Button>

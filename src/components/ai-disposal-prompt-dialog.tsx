@@ -45,7 +45,7 @@ export function AiDisposalPromptDialog({ isOpen, onOpenChange, assets, onSuggest
       if (suggestedIds.length > 0) {
         toast({
             title: "Sugerencias de IA listas",
-            description: `Se encontraron ${suggestedIds.length} activos que coinciden con sus criterios.`
+            description: `La IA sugiere marcar ${suggestedIds.length} activos como obsoletos.`
         })
       } else {
         toast({
@@ -68,9 +68,9 @@ export function AiDisposalPromptDialog({ isOpen, onOpenChange, assets, onSuggest
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Asistente de Eliminación con IA</DialogTitle>
+          <DialogTitle>Asistente de Bajas con IA</DialogTitle>
           <DialogDescription>
-            Describe los activos que quieres considerar para su eliminación. Por ejemplo, "portátiles de más de 4 años" o "monitores de Dell comprados antes de 2020".
+            Describe los activos que quieres considerar para su baja. Por ejemplo, "portátiles con más de 5 años" o "monitores Dell comprados antes de 2020".
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

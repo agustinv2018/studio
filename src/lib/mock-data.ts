@@ -3,6 +3,7 @@ import type { Asset } from './types';
 export const mockAssets: Asset[] = [
   {
     id: '1',
+    name: 'Portátil del Director de TI',
     productType: 'Laptop',
     model: 'MacBook Pro 14"',
     serialNumber: 'SN-MBP14-001',
@@ -11,6 +12,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: '2',
+    name: 'Monitor de Sala de Conferencias',
     productType: 'Monitor',
     model: 'Dell U2721DE',
     serialNumber: 'SN-DELL27-002',
@@ -19,6 +21,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: '3',
+    name: 'Teclado de repuesto 1',
     productType: 'Keyboard',
     model: 'Logitech MX Keys',
     serialNumber: 'SN-LOGI-K-003',
@@ -27,6 +30,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: '4',
+    name: 'Viejo Portátil de Ventas',
     productType: 'Laptop',
     model: 'ThinkPad T480s',
     serialNumber: 'SN-TP480-004',
@@ -35,6 +39,7 @@ export const mockAssets: Asset[] = [
   },
   {
     id: '5',
+    name: 'PC de Recepción',
     productType: 'Desktop',
     model: 'HP EliteDesk 800',
     serialNumber: 'SN-HPED-005',
@@ -43,6 +48,7 @@ export const mockAssets: Asset[] = [
   },
     {
     id: '6',
+    name: 'Ratón ergonómico',
     productType: 'Mouse',
     model: 'Logitech MX Master 3',
     serialNumber: 'SN-LOGI-M-006',
@@ -51,10 +57,11 @@ export const mockAssets: Asset[] = [
   },
   {
     id: '7',
+    name: 'Monitor Secundario de Diseño',
     productType: 'Monitor',
     model: 'LG 27UL850-W',
     serialNumber: 'SN-LG27-007',
     purchaseDate: new Date('2019-02-28T00:00:00Z'),
-    status: 'Activo',
+    status: 'De baja',
   },
 ];

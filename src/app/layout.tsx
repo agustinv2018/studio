@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Inventario Técnico",
+  title: "Tech Inventory",
   description: "Una aplicación para inventariar suministros y hardware de TI.",
 };
 
