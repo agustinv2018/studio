@@ -11,6 +11,7 @@ export type Asset = {
   estado: AssetStatus;
   fechaBaja?: Date | null;
   motivoBaja?: string | null;
+  usuarioAlta?: string | null; // uid
   usuarioBaja?: string | null; // uid
   documentUrl?: string;
 };

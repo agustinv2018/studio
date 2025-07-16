@@ -38,9 +38,10 @@ type AssetTableProps = {
   onUpdateStatus: (assetId: string, status: AssetStatus, reason?: string) => void;
   onDelete: (assetId: string) => void;
   highlightedRows?: string[];
+  isAdmin: boolean;
 };
 
-export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows = [] }: AssetTableProps) {
+export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows = [], isAdmin }: AssetTableProps) {
   const [aiSuggestion, setAiSuggestion] = useState<SuggestDisposalOutput | null>(null);
   const [isSuggestionLoading, setSuggestionLoading] = useState(false);
   const [isAlertOpen, setAlertOpen] = useState(false);
@@ -122,9 +123,11 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
               <TableHead>Modelo</TableHead>
               <TableHead>Número de Serie</TableHead>
               <TableHead>Fecha de Compra</TableHead>
-              <TableHead>
-                <span className="sr-only">Acciones</span>
-              </TableHead>
+              {isAdmin && (
+                <TableHead>
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -141,42 +144,44 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
                   <TableCell>{asset.modelo}</TableCell>
                   <TableCell>{asset.numeroSerie}</TableCell>
                   <TableCell>{format(asset.fechaCompra, "PPP", { locale: es })}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={asset.estado === 'baja'}>
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Alternar menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleGetAiSuggestion(asset)}>
-                          <Bot className="mr-2 h-4 w-4" />
-                          Sugerencia de IA
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'obsoleto')} disabled={asset.estado === 'obsoleto'}>
-                          <Archive className="mr-2 h-4 w-4" />
-                          Marcar como Obsoleto
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openDisposalDialog(asset)}>
-                            <ArrowDownCircle className="mr-2 h-4 w-4" />
-                            Dar de baja
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDelete(asset.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  {isAdmin && (
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost" disabled={asset.estado === 'baja'}>
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Alternar menú</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleGetAiSuggestion(asset)}>
+                            <Bot className="mr-2 h-4 w-4" />
+                            Sugerencia de IA
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'obsoleto')} disabled={asset.estado === 'obsoleto'}>
+                            <Archive className="mr-2 h-4 w-4" />
+                            Marcar como Obsoleto
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openDisposalDialog(asset)}>
+                              <ArrowDownCircle className="mr-2 h-4 w-4" />
+                              Dar de baja
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDelete(asset.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
+                <TableCell colSpan={isAdmin ? 7 : 6} className="h-24 text-center">
                   No se encontraron activos.
                 </TableCell>
               </TableRow>

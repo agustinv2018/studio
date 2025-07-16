@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { PlusCircle, Search, Sparkles } from "lucide-react";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import type { Asset } from "@/lib/types";
-import { mockAssets } from "@/lib/mock-data";
+import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,14 +18,51 @@ import { AssetTable } from "@/components/asset-table";
 import { AddAssetDialog } from "./add-asset-dialog";
 import { AiDisposalPromptDialog } from "./ai-disposal-prompt-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth-context";
+import { Skeleton } from "./ui/skeleton";
 
 export function DashboardPage() {
-  const [assets, setAssets] = useState<Asset[]>(mockAssets);
+  const { user } = useAuth();
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddAssetOpen, setAddAssetOpen] = useState(false);
   const [isAiDisposalOpen, setAiDisposalOpen] = useState(false);
   const [suggestedForDisposal, setSuggestedForDisposal] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const isAdmin = user?.rol === 'admin';
+
+  const fetchAssets = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const q = query(collection(db, "activos"), orderBy("fechaCompra", "desc"));
+      const querySnapshot = await getDocs(q);
+      const assetsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          fechaCompra: data.fechaCompra.toDate(),
+          fechaBaja: data.fechaBaja ? data.fechaBaja.toDate() : null,
+        } as Asset;
+      });
+      setAssets(assetsData);
+    } catch (error) {
+      console.error("Error fetching assets: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudieron cargar los activos desde Firestore.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchAssets();
+  }, [fetchAssets]);
 
   const filteredAssets = useMemo(() => {
     return assets.filter(
@@ -36,46 +74,94 @@ export function DashboardPage() {
     );
   }, [assets, searchTerm]);
 
-  const handleAddAsset = useCallback((newAsset: Omit<Asset, 'id' | 'estado'>) => {
-    setAssets((prev) => [
-      { ...newAsset, id: (prev.length + 1).toString(), estado: "activo" },
-      ...prev,
-    ]);
-    toast({
-      title: "Éxito",
-      description: "Activo agregado al inventario.",
-    });
-  }, [toast]);
+  const handleAddAsset = useCallback(async (newAsset: Omit<Asset, 'id' | 'estado' | 'usuarioAlta'>) => {
+    if (!user) return;
+    try {
+      const docRef = await addDoc(collection(db, "activos"), {
+        ...newAsset,
+        estado: "activo",
+        usuarioAlta: user.uid,
+        fechaAlta: serverTimestamp(),
+      });
+      toast({
+        title: "Éxito",
+        description: "Activo agregado al inventario.",
+      });
+      await fetchAssets();
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo agregar el activo.",
+      });
+      console.error("Error adding asset: ", error);
+    }
+  }, [toast, user, fetchAssets]);
   
-  const handleUpdateAssetStatus = useCallback((assetId: string, estado: Asset['estado'], reason?: string) => {
-    setAssets((prev) =>
-      prev.map((asset) =>
-        asset.id === assetId ? { ...asset, estado, motivoBaja: reason, fechaBaja: estado === 'baja' ? new Date() : asset.fechaBaja } : asset
-      )
-    );
-    toast({
-      title: "Activo Actualizado",
-      description: `El activo ha sido marcado como ${estado}.${reason ? ` Motivo: ${reason}`: ''}`,
-    });
-  }, [toast]);
+  const handleUpdateAssetStatus = useCallback(async (assetId: string, estado: Asset['estado'], reason?: string) => {
+    if (!user) return;
+    try {
+      const assetRef = doc(db, "activos", assetId);
+      const updateData: any = { estado };
+      if (estado === 'baja') {
+        updateData.motivoBaja = reason;
+        updateData.fechaBaja = serverTimestamp();
+        updateData.usuarioBaja = user.uid;
+      }
+      await updateDoc(assetRef, updateData);
+      toast({
+        title: "Activo Actualizado",
+        description: `El activo ha sido marcado como ${estado}.${reason ? ` Motivo: ${reason}`: ''}`,
+      });
+       await fetchAssets();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el estado del activo.",
+      });
+       console.error("Error updating asset status: ", error);
+    }
+  }, [toast, user, fetchAssets]);
 
-  const handleDeleteAsset = useCallback((assetId: string) => {
-    setAssets((prev) => prev.filter((asset) => asset.id !== assetId));
-     toast({
-      title: "Activo Eliminado",
-      description: "El activo ha sido eliminado del inventario.",
-      variant: "destructive",
-    });
-  }, [toast]);
+  const handleDeleteAsset = useCallback(async (assetId: string) => {
+    try {
+      await deleteDoc(doc(db, "activos", assetId));
+       toast({
+        title: "Activo Eliminado",
+        description: "El activo ha sido eliminado del inventario.",
+        variant: "destructive",
+      });
+      await fetchAssets();
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo eliminar el activo.",
+      });
+      console.error("Error deleting asset: ", error);
+    }
+  }, [toast, fetchAssets]);
 
-  const handleBulkUpdateStatus = useCallback(() => {
-    setAssets(prev => prev.map(asset => suggestedForDisposal.includes(asset.id) ? { ...asset, estado: 'obsoleto' } : asset));
-    toast({
-      title: "Activos Actualizados",
-      description: `${suggestedForDisposal.length} activos han sido marcados como Obsoletos.`
-    });
-    setSuggestedForDisposal([]);
-  }, [suggestedForDisposal, toast]);
+  const handleBulkUpdateStatus = useCallback(async () => {
+    try {
+      const promises = suggestedForDisposal.map(id => updateDoc(doc(db, "activos", id), { estado: 'obsoleto' }));
+      await Promise.all(promises);
+      toast({
+        title: "Activos Actualizados",
+        description: `${suggestedForDisposal.length} activos han sido marcados como Obsoletos.`
+      });
+      setSuggestedForDisposal([]);
+      await fetchAssets();
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudieron actualizar los activos.",
+      });
+       console.error("Error bulk updating assets: ", error);
+    }
+  }, [suggestedForDisposal, toast, fetchAssets]);
 
   return (
     <>
@@ -100,21 +186,23 @@ export function DashboardPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
-                  <Button variant="outline" onClick={() => setAiDisposalOpen(true)} className="flex-1 sm:flex-none">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Sugerir Bajas con IA
-                  </Button>
-                  <Button onClick={() => setAddAssetOpen(true)} className="flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Añadir Activo
-                  </Button>
-                </div>
+                {isAdmin && (
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button variant="outline" onClick={() => setAiDisposalOpen(true)} className="flex-1 sm:flex-none">
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Sugerir Bajas con IA
+                    </Button>
+                    <Button onClick={() => setAddAssetOpen(true)} className="flex-1 sm:flex-none bg-primary text-primary-foreground hover:bg-primary/90">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Añadir Activo
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            {suggestedForDisposal.length > 0 && (
+            {suggestedForDisposal.length > 0 && isAdmin && (
               <div className="mb-4 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm text-accent-foreground flex items-center justify-between">
                 <p>
                   <Sparkles className="inline-block mr-2 h-4 w-4" />
@@ -126,12 +214,22 @@ export function DashboardPage() {
                 </div>
               </div>
             )}
-            <AssetTable
-              assets={filteredAssets}
-              onUpdateStatus={handleUpdateAssetStatus}
-              onDelete={handleDeleteAsset}
-              highlightedRows={suggestedForDisposal}
-            />
+            {isLoading ? (
+               <div className="space-y-2">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+               </div>
+            ) : (
+              <AssetTable
+                assets={filteredAssets}
+                onUpdateStatus={handleUpdateAssetStatus}
+                onDelete={handleDeleteAsset}
+                highlightedRows={suggestedForDisposal}
+                isAdmin={isAdmin}
+              />
+            )}
           </CardContent>
         </Card>
       </div>
