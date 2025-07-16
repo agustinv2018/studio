@@ -56,7 +56,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
     setAlertOpen(true);
     try {
       const suggestion = await suggestDisposal({
-        assetDetails: `Producto: ${asset.productType}, Modelo: ${asset.model}, Fecha de compra: ${asset.purchaseDate.toISOString()}`,
+        assetDetails: `Producto: ${asset.tipo}, Modelo: ${asset.modelo}, Fecha de compra: ${asset.fechaCompra.toISOString()}`,
       });
       setAiSuggestion(suggestion);
     } catch (error) {
@@ -78,7 +78,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
 
   const handleConfirmDisposal = () => {
     if (assetForDisposal && disposalReason) {
-      onUpdateStatus(assetForDisposal.id, 'De baja', disposalReason);
+      onUpdateStatus(assetForDisposal.id, 'baja', disposalReason);
       setIsDisposalAlertOpen(false);
       setDisposalReason("");
       setAssetForDisposal(null);
@@ -98,11 +98,11 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
 
   const getStatusVariant = (status: AssetStatus) => {
     switch (status) {
-      case 'Activo':
+      case 'activo':
         return 'secondary';
-      case 'Obsoleto':
+      case 'obsoleto':
         return 'outline';
-      case 'De baja':
+      case 'baja':
         return 'destructive';
       default:
         return 'default';
@@ -130,21 +130,21 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
           <TableBody>
             {assets.length > 0 ? (
               assets.map((asset) => (
-                <TableRow key={asset.id} className={cn(highlightedRows.includes(asset.id) && "bg-orange-100 dark:bg-orange-900/30", asset.status === 'De baja' && 'opacity-50')}>
+                <TableRow key={asset.id} className={cn(highlightedRows.includes(asset.id) && "bg-accent/20", asset.estado === 'baja' && 'opacity-50')}>
                   <TableCell>
-                    <Badge variant={getStatusVariant(asset.status)}>
-                      {asset.status}
+                    <Badge variant={getStatusVariant(asset.estado)} className="capitalize">
+                      {asset.estado}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium">{asset.name}</TableCell>
-                  <TableCell>{asset.productType}</TableCell>
-                  <TableCell>{asset.model}</TableCell>
-                  <TableCell>{asset.serialNumber}</TableCell>
-                  <TableCell>{format(asset.purchaseDate, "PPP", { locale: es })}</TableCell>
+                  <TableCell className="font-medium">{asset.nombre}</TableCell>
+                  <TableCell>{asset.tipo}</TableCell>
+                  <TableCell>{asset.modelo}</TableCell>
+                  <TableCell>{asset.numeroSerie}</TableCell>
+                  <TableCell>{format(asset.fechaCompra, "PPP", { locale: es })}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={asset.status === 'De baja'}>
+                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={asset.estado === 'baja'}>
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">Alternar menú</span>
                         </Button>
@@ -156,7 +156,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
                           Sugerencia de IA
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'Obsoleto')} disabled={asset.status === 'Obsoleto'}>
+                        <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'obsoleto')} disabled={asset.estado === 'obsoleto'}>
                           <Archive className="mr-2 h-4 w-4" />
                           Marcar como Obsoleto
                         </DropdownMenuItem>
@@ -165,7 +165,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
                             Dar de baja
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(asset.id)}>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDelete(asset.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
                         </DropdownMenuItem>
@@ -216,9 +216,9 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
             {aiSuggestion?.shouldDispose && (
                <AlertDialogAction asChild>
                 <Button onClick={() => {
-                  const assetToUpdate = assets.find(a => a.model === aiSuggestion.reason.split("Modelo: ")[1]?.split(",")[0]);
+                  const assetToUpdate = assets.find(a => a.modelo === aiSuggestion.reason.split("Modelo: ")[1]?.split(",")[0]);
                   if(assetToUpdate) {
-                    onUpdateStatus(assetToUpdate.id, 'Obsoleto');
+                    onUpdateStatus(assetToUpdate.id, 'obsoleto');
                   }
                   closeAlert();
                 }}>
@@ -235,7 +235,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
             <AlertDialogHeader>
                 <AlertDialogTitle>Dar de baja activo</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Para dar de baja el activo "{assetForDisposal?.name}", por favor, proporciona un motivo y adjunta el acta de baja.
+                    Para dar de baja el activo "{assetForDisposal?.nombre}", por favor, proporciona un motivo y adjunta el acta de baja.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="grid gap-4 py-4">

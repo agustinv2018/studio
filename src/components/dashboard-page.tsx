@@ -29,16 +29,16 @@ export function DashboardPage() {
   const filteredAssets = useMemo(() => {
     return assets.filter(
       (asset) =>
-        asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.productType.toLowerCase().includes(searchTerm.toLowerCase())
+        asset.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.numeroSerie.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        asset.tipo.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [assets, searchTerm]);
 
-  const handleAddAsset = useCallback((newAsset: Omit<Asset, 'id' | 'status'>) => {
+  const handleAddAsset = useCallback((newAsset: Omit<Asset, 'id' | 'estado'>) => {
     setAssets((prev) => [
-      { ...newAsset, id: (prev.length + 1).toString(), status: "Activo" },
+      { ...newAsset, id: (prev.length + 1).toString(), estado: "activo" },
       ...prev,
     ]);
     toast({
@@ -47,15 +47,15 @@ export function DashboardPage() {
     });
   }, [toast]);
   
-  const handleUpdateAssetStatus = useCallback((assetId: string, status: Asset['status'], reason?: string) => {
+  const handleUpdateAssetStatus = useCallback((assetId: string, estado: Asset['estado'], reason?: string) => {
     setAssets((prev) =>
       prev.map((asset) =>
-        asset.id === assetId ? { ...asset, status } : asset
+        asset.id === assetId ? { ...asset, estado, motivoBaja: reason, fechaBaja: estado === 'baja' ? new Date() : asset.fechaBaja } : asset
       )
     );
     toast({
       title: "Activo Actualizado",
-      description: `El activo ha sido marcado como ${status}.${reason ? ` Motivo: ${reason}`: ''}`,
+      description: `El activo ha sido marcado como ${estado}.${reason ? ` Motivo: ${reason}`: ''}`,
     });
   }, [toast]);
 
@@ -69,7 +69,7 @@ export function DashboardPage() {
   }, [toast]);
 
   const handleBulkUpdateStatus = useCallback(() => {
-    setAssets(prev => prev.map(asset => suggestedForDisposal.includes(asset.id) ? { ...asset, status: 'Obsoleto' } : asset));
+    setAssets(prev => prev.map(asset => suggestedForDisposal.includes(asset.id) ? { ...asset, estado: 'obsoleto' } : asset));
     toast({
       title: "Activos Actualizados",
       description: `${suggestedForDisposal.length} activos han sido marcados como Obsoletos.`
@@ -115,13 +115,13 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             {suggestedForDisposal.length > 0 && (
-              <div className="mb-4 rounded-lg border border-orange-300 bg-orange-50 p-4 text-sm text-orange-800 flex items-center justify-between">
+              <div className="mb-4 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm text-accent-foreground flex items-center justify-between">
                 <p>
                   <Sparkles className="inline-block mr-2 h-4 w-4" />
                   La IA sugiere marcar <strong>{suggestedForDisposal.length}</strong> activos como obsoletos.
                 </p>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleBulkUpdateStatus}>Marcar como Obsoleto</Button>
+                  <Button size="sm" onClick={handleBulkUpdateStatus} variant="outline" className="bg-background">Marcar como Obsoleto</Button>
                   <Button size="sm" variant="ghost" onClick={() => setSuggestedForDisposal([])}>Descartar</Button>
                 </div>
               </div>

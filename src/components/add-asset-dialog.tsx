@@ -44,11 +44,11 @@ import {
 import { Label } from "./ui/label";
 
 const formSchema = z.object({
-  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  productType: z.enum(productTypes),
-  model: z.string().min(2, "El modelo debe tener al menos 2 caracteres."),
-  serialNumber: z.string().min(5, "El número de serie debe tener al menos 5 caracteres."),
-  purchaseDate: z.date({
+  nombre: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+  tipo: z.enum(productTypes),
+  modelo: z.string().min(2, "El modelo debe tener al menos 2 caracteres."),
+  numeroSerie: z.string().min(5, "El número de serie debe tener al menos 5 caracteres."),
+  fechaCompra: z.date({
     required_error: "Se requiere una fecha de compra.",
   }),
   document: z.any().optional(),
@@ -57,16 +57,16 @@ const formSchema = z.object({
 type AddAssetDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddAsset: (asset: Omit<Asset, 'id' | 'status'>) => void;
+  onAddAsset: (asset: Omit<Asset, 'id' | 'estado' | 'fechaBaja' | 'motivoBaja' | 'usuarioBaja'>) => void;
 };
 
 export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        name: "",
-        model: "",
-        serialNumber: "",
+        nombre: "",
+        modelo: "",
+        numeroSerie: "",
     }
   });
 
@@ -90,7 +90,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
             <FormField
               control={form.control}
-              name="name"
+              name="nombre"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nombre del activo</FormLabel>
@@ -103,7 +103,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
             />
             <FormField
               control={form.control}
-              name="productType"
+              name="tipo"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipo de Producto</FormLabel>
@@ -127,7 +127,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
             />
             <FormField
               control={form.control}
-              name="model"
+              name="modelo"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Modelo</FormLabel>
@@ -140,7 +140,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
             />
             <FormField
               control={form.control}
-              name="serialNumber"
+              name="numeroSerie"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Número de Serie</FormLabel>
@@ -153,7 +153,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
             />
             <FormField
               control={form.control}
-              name="purchaseDate"
+              name="fechaCompra"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Fecha de Compra</FormLabel>

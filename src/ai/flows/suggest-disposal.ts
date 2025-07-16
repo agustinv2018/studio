@@ -45,7 +45,7 @@ const prompt = ai.definePrompt({
   name: 'suggestDisposalPrompt',
   input: {schema: SuggestDisposalInputSchema},
   output: {schema: SuggestDisposalOutputSchema},
-  prompt: `Eres un experto en gestión de activos de TI. Analiza los siguientes detalles del activo y determina si debe ser eliminado.
+  prompt: `Eres un experto en gestión de activos de TI. Analiza los siguientes detalles del activo y determina si debe ser eliminado. Considera que la vida útil de los activos tecnológicos es de 5 años.
 
 Detalles del activo: {{{assetDetails}}}
 
