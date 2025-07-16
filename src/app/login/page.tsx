@@ -40,7 +40,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Error de inicio de sesión",
-        description: "Las credenciales son incorrectas. Por favor, créalas en la consola de Firebase o regístrate.",
+        description: "Credenciales incorrectas. Por favor, regístrate o crea el usuario en la consola de Firebase.",
       });
     } finally {
       setIsLoading(false);
