@@ -44,20 +44,20 @@ export function AiDisposalPromptDialog({ isOpen, onOpenChange, assets, onSuggest
       setPrompt("");
       if (suggestedIds.length > 0) {
         toast({
-            title: "AI Suggestions Ready",
-            description: `Found ${suggestedIds.length} assets matching your criteria.`
+            title: "Sugerencias de IA listas",
+            description: `Se encontraron ${suggestedIds.length} activos que coinciden con sus criterios.`
         })
       } else {
         toast({
-            title: "No assets found",
-            description: "AI couldn't find any assets matching your criteria."
+            title: "No se encontraron activos",
+            description: "La IA no pudo encontrar ningún activo que coincida con sus criterios."
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "AI Suggestion Failed",
-        description: "Could not get suggestions at this time.",
+        title: "Falló la sugerencia de IA",
+        description: "No se pudieron obtener sugerencias en este momento.",
       });
     } finally {
       setIsLoading(false);
@@ -68,17 +68,17 @@ export function AiDisposalPromptDialog({ isOpen, onOpenChange, assets, onSuggest
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>AI Disposal Assistant</DialogTitle>
+          <DialogTitle>Asistente de Eliminación con IA</DialogTitle>
           <DialogDescription>
-            Describe the assets you want to consider for disposal. For example, "laptops older than 4 years" or "monitors from Dell purchased before 2020".
+            Describe los activos que quieres considerar para su eliminación. Por ejemplo, "portátiles de más de 4 años" o "monitores de Dell comprados antes de 2020".
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid w-full gap-1.5">
-            <Label htmlFor="prompt">Your prompt</Label>
+            <Label htmlFor="prompt">Tu indicación</Label>
             <Textarea 
                 id="prompt" 
-                placeholder="Type your criteria here..." 
+                placeholder="Escribe tus criterios aquí..." 
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 rows={4}
@@ -87,7 +87,7 @@ export function AiDisposalPromptDialog({ isOpen, onOpenChange, assets, onSuggest
         </div>
         <DialogFooter>
           <Button onClick={handleSubmit} disabled={isLoading || !prompt}>
-            {isLoading ? "Thinking..." : <><Sparkles className="mr-2 h-4 w-4" /> Get Suggestions</>}
+            {isLoading ? "Pensando..." : <><Sparkles className="mr-2 h-4 w-4" /> Obtener Sugerencias</>}
           </Button>
         </DialogFooter>
       </DialogContent>

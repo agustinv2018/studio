@@ -1,4 +1,4 @@
-export type AssetStatus = 'Active' | 'Obsolete';
+export type AssetStatus = 'Activo' | 'Obsoleto';
 export type ProductType = 'Laptop' | 'Desktop' | 'Monitor' | 'Keyboard' | 'Mouse' | 'Other';
 
 export type Asset = {

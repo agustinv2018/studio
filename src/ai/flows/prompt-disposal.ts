@@ -2,23 +2,23 @@
 'use server';
 
 /**
- * @fileOverview A flow for suggesting assets for disposal based on a prompt.
+ * @fileOverview Un flujo para sugerir activos para su eliminación basándose en una indicación.
  *
- * - disposeAssetsFromPrompt - A function that suggests assets for disposal based on a prompt.
- * - DisposeAssetsFromPromptInput - The input type for the disposeAssetsFromPrompt function.
- * - DisposeAssetsFromPromptOutput - The return type for the disposeAssetsFromPrompt function.
+ * - disposeAssetsFromPrompt - Una función que sugiere activos para su eliminación basándose en una indicación.
+ * - DisposeAssetsFromPromptInput - El tipo de entrada para la función disposeAssetsFromPrompt.
+ * - DisposeAssetsFromPromptOutput - El tipo de retorno para la función disposeAssetsFromPrompt.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DisposeAssetsFromPromptInputSchema = z.object({
-  prompt: z.string().describe('A description of the attributes of assets to dispose of.'),
-  assets: z.array(z.record(z.any())).describe('The list of assets to evaluate.'),
+  prompt: z.string().describe('Una descripción de los atributos de los activos a eliminar.'),
+  assets: z.array(z.record(z.any())).describe('La lista de activos a evaluar.'),
 });
 export type DisposeAssetsFromPromptInput = z.infer<typeof DisposeAssetsFromPromptInputSchema>;
 
-const DisposeAssetsFromPromptOutputSchema = z.array(z.record(z.any())).describe('The assets suggested for disposal.');
+const DisposeAssetsFromPromptOutputSchema = z.array(z.record(z.any())).describe('Los activos sugeridos para su eliminación.');
 export type DisposeAssetsFromPromptOutput = z.infer<typeof DisposeAssetsFromPromptOutputSchema>;
 
 export async function disposeAssetsFromPrompt(input: DisposeAssetsFromPromptInput): Promise<DisposeAssetsFromPromptOutput> {
@@ -29,17 +29,17 @@ const prompt = ai.definePrompt({
   name: 'disposeAssetsFromPromptPrompt',
   input: {schema: DisposeAssetsFromPromptInputSchema},
   output: {schema: DisposeAssetsFromPromptOutputSchema},
-  prompt: `You are an expert IT asset manager.
+  prompt: `Eres un experto gestor de activos de TI.
 
-You will be provided with a list of assets and a description of the attributes of assets that should be disposed of.
+Se te proporcionará una lista de activos y una descripción de los atributos de los activos que deben ser eliminados.
 
-Your job is to return a list of assets that match the description.
+Tu trabajo es devolver una lista de activos que coincidan con la descripción.
 
-Description: {{{prompt}}}
+Descripción: {{{prompt}}}
 
-Assets: {{{assets}}}
+Activos: {{{assets}}}
 
-Return only the assets that match the description. Do not include any other information.`,
+Devuelve solo los activos que coincidan con la descripción. No incluyas ninguna otra información.`,
 });
 
 const disposeAssetsFromPromptFlow = ai.defineFlow(

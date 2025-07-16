@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { MoreHorizontal, Bot, Archive, Trash2 } from "lucide-react";
 import type { Asset, AssetStatus } from "@/lib/types";
 import { suggestDisposal, type SuggestDisposalOutput } from "@/ai/flows/suggest-disposal";
@@ -48,14 +49,14 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
     setAlertOpen(true);
     try {
       const suggestion = await suggestDisposal({
-        assetDetails: `Product: ${asset.productType}, Model: ${asset.model}, Purchase Date: ${asset.purchaseDate.toISOString()}`,
+        assetDetails: `Producto: ${asset.productType}, Modelo: ${asset.model}, Fecha de compra: ${asset.purchaseDate.toISOString()}`,
       });
       setAiSuggestion(suggestion);
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "AI Suggestion Failed",
-        description: "Could not get a suggestion at this time.",
+        title: "Falló la sugerencia de IA",
+        description: "No se pudo obtener una sugerencia en este momento.",
       });
       setAlertOpen(false);
     } finally {
@@ -74,13 +75,13 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Status</TableHead>
-              <TableHead>Product Type</TableHead>
-              <TableHead>Model</TableHead>
-              <TableHead>Serial Number</TableHead>
-              <TableHead>Purchase Date</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead>Tipo de Producto</TableHead>
+              <TableHead>Modelo</TableHead>
+              <TableHead>Número de Serie</TableHead>
+              <TableHead>Fecha de Compra</TableHead>
               <TableHead>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">Acciones</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -89,36 +90,36 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
               assets.map((asset) => (
                 <TableRow key={asset.id} className={cn(highlightedRows.includes(asset.id) && "bg-orange-100 dark:bg-orange-900/30")}>
                   <TableCell>
-                    <Badge variant={asset.status === 'Obsolete' ? 'destructive' : 'secondary'}>
+                    <Badge variant={asset.status === 'Obsoleto' ? 'destructive' : 'secondary'}>
                       {asset.status}
                     </Badge>
                   </TableCell>
                   <TableCell>{asset.productType}</TableCell>
                   <TableCell className="font-medium">{asset.model}</TableCell>
                   <TableCell>{asset.serialNumber}</TableCell>
-                  <TableCell>{format(asset.purchaseDate, "PPP")}</TableCell>
+                  <TableCell>{format(asset.purchaseDate, "PPP", { locale: es })}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Alternar menú</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleGetAiSuggestion(asset)}>
                           <Bot className="mr-2 h-4 w-4" />
-                          AI Suggestion
+                          Sugerencia de IA
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'Obsolete')} disabled={asset.status === 'Obsolete'}>
+                        <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'Obsoleto')} disabled={asset.status === 'Obsoleto'}>
                           <Archive className="mr-2 h-4 w-4" />
-                          Mark as Obsolete
+                          Marcar como Obsoleto
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => onDelete(asset.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -128,7 +129,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  No assets found.
+                  No se encontraron activos.
                 </TableCell>
               </TableRow>
             )}
@@ -140,7 +141,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              <Bot className="inline-block mr-2" /> AI Disposal Suggestion
+              <Bot className="inline-block mr-2" /> Sugerencia de Eliminación de IA
             </AlertDialogTitle>
             <AlertDialogDescription>
               {isSuggestionLoading ? (
@@ -152,28 +153,28 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
               ) : aiSuggestion ? (
                 <>
                   <p className="font-bold text-lg mt-4">
-                    Suggestion:{" "}
+                    Sugerencia:{" "}
                     <span className={cn(aiSuggestion.shouldDispose ? "text-destructive" : "text-green-600")}>
-                      {aiSuggestion.shouldDispose ? "Dispose Asset" : "Keep Asset"}
+                      {aiSuggestion.shouldDispose ? "Eliminar Activo" : "Conservar Activo"}
                     </span>
                   </p>
                   <p className="mt-2 text-foreground">{aiSuggestion.reason}</p>
                 </>
-              ) : "No suggestion available."}
+              ) : "No hay sugerencia disponible."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={closeAlert}>Close</AlertDialogCancel>
+            <AlertDialogCancel onClick={closeAlert}>Cerrar</AlertDialogCancel>
             {aiSuggestion?.shouldDispose && (
                <AlertDialogAction asChild>
                 <Button onClick={() => {
-                  const assetToUpdate = assets.find(a => a.model === aiSuggestion.reason.split("Model: ")[1]?.split(",")[0]);
+                  const assetToUpdate = assets.find(a => a.model === aiSuggestion.reason.split("Modelo: ")[1]?.split(",")[0]);
                   if(assetToUpdate) {
-                    onUpdateStatus(assetToUpdate.id, 'Obsolete');
+                    onUpdateStatus(assetToUpdate.id, 'Obsoleto');
                   }
                   closeAlert();
                 }}>
-                  Mark as Obsolete
+                  Marcar como Obsoleto
                 </Button>
               </AlertDialogAction>
             )}

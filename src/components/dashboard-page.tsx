@@ -37,12 +37,12 @@ export function DashboardPage() {
 
   const handleAddAsset = useCallback((newAsset: Omit<Asset, 'id' | 'status'>) => {
     setAssets((prev) => [
-      { ...newAsset, id: (prev.length + 1).toString(), status: "Active" },
+      { ...newAsset, id: (prev.length + 1).toString(), status: "Activo" },
       ...prev,
     ]);
     toast({
-      title: "Success",
-      description: "Asset added to the inventory.",
+      title: "Éxito",
+      description: "Activo agregado al inventario.",
     });
   }, [toast]);
   
@@ -53,25 +53,25 @@ export function DashboardPage() {
       )
     );
     toast({
-      title: "Asset Updated",
-      description: `Asset has been marked as ${status}.`,
+      title: "Activo Actualizado",
+      description: `El activo ha sido marcado como ${status}.`,
     });
   }, [toast]);
 
   const handleDeleteAsset = useCallback((assetId: string) => {
     setAssets((prev) => prev.filter((asset) => asset.id !== assetId));
      toast({
-      title: "Asset Deleted",
-      description: "Asset has been removed from the inventory.",
+      title: "Activo Eliminado",
+      description: "El activo ha sido eliminado del inventario.",
       variant: "destructive",
     });
   }, [toast]);
 
   const handleBulkUpdateStatus = useCallback(() => {
-    setAssets(prev => prev.map(asset => suggestedForDisposal.includes(asset.id) ? { ...asset, status: 'Obsolete' } : asset));
+    setAssets(prev => prev.map(asset => suggestedForDisposal.includes(asset.id) ? { ...asset, status: 'Obsoleto' } : asset));
     toast({
-      title: "Assets Updated",
-      description: `${suggestedForDisposal.length} assets have been marked as Obsolete.`
+      title: "Activos Actualizados",
+      description: `${suggestedForDisposal.length} activos han sido marcados como Obsoletos.`
     });
     setSuggestedForDisposal([]);
   }, [suggestedForDisposal, toast]);
@@ -83,9 +83,9 @@ export function DashboardPage() {
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <CardTitle>Inventory</CardTitle>
+                <CardTitle>Inventario</CardTitle>
                 <CardDescription>
-                  Manage your IT hardware and supplies.
+                  Gestiona tu hardware y suministros de TI.
                 </CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-2">
@@ -93,7 +93,7 @@ export function DashboardPage() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="search"
-                    placeholder="Search assets..."
+                    placeholder="Buscar activos..."
                     className="pl-8 sm:w-[300px]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -102,11 +102,11 @@ export function DashboardPage() {
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button variant="outline" onClick={() => setAiDisposalOpen(true)} className="flex-1 sm:flex-none">
                     <Sparkles className="mr-2 h-4 w-4" />
-                    AI Disposal
+                    Eliminación con IA
                   </Button>
                   <Button onClick={() => setAddAssetOpen(true)} className="flex-1 sm:flex-none bg-accent text-accent-foreground hover:bg-accent/90">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Asset
+                    Añadir Activo
                   </Button>
                 </div>
               </div>
@@ -117,11 +117,11 @@ export function DashboardPage() {
               <div className="mb-4 rounded-lg border border-orange-300 bg-orange-50 p-4 text-sm text-orange-800 flex items-center justify-between">
                 <p>
                   <Sparkles className="inline-block mr-2 h-4 w-4" />
-                  AI suggests disposing <strong>{suggestedForDisposal.length}</strong> assets.
+                  La IA sugiere eliminar <strong>{suggestedForDisposal.length}</strong> activos.
                 </p>
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={handleBulkUpdateStatus}>Mark as Obsolete</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSuggestedForDisposal([])}>Dismiss</Button>
+                  <Button size="sm" onClick={handleBulkUpdateStatus}>Marcar como Obsoleto</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setSuggestedForDisposal([])}>Descartar</Button>
                 </div>
               </div>
             )}

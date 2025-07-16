@@ -2,11 +2,11 @@
 'use server';
 
 /**
- * @fileOverview A flow to suggest IT assets for disposal based on their purchase date.
+ * @fileOverview Un flujo para sugerir activos de TI para su eliminación en función de su fecha de compra.
  *
- * - suggestDisposal - A function that suggests IT assets for disposal.
- * - SuggestDisposalInput - The input type for the suggestDisposal function.
- * - SuggestDisposalOutput - The return type for the suggestDisposal function.
+ * - suggestDisposal - Una función que sugiere activos de TI para su eliminación.
+ * - SuggestDisposalInput - El tipo de entrada para la función suggestDisposal.
+ * - SuggestDisposalOutput - El tipo de retorno para la función suggestDisposal.
  */
 
 import {ai} from '@/ai/genkit';
@@ -16,12 +16,12 @@ const SuggestDisposalInputSchema = z.object({
   assetDetails: z
     .string()
     .describe(
-      'The details of the IT asset, including product type, model, serial number, and purchase date.'
+      'Los detalles del activo de TI, incluyendo tipo de producto, modelo, número de serie y fecha de compra.'
     ),
   disposalReason: z
     .string()
     .optional()
-    .describe('Optional: Reason for disposal consideration.'),
+    .describe('Opcional: Razón para la consideración de la eliminación.'),
 });
 export type SuggestDisposalInput = z.infer<typeof SuggestDisposalInputSchema>;
 
@@ -29,11 +29,11 @@ const SuggestDisposalOutputSchema = z.object({
   shouldDispose: z
     .boolean()
     .describe(
-      'Whether the asset should be disposed of based on its age and condition.'
+      'Si el activo debe ser eliminado en función de su antigüedad y estado.'
     ),
   reason: z
     .string()
-    .describe('The detailed reason for suggesting disposal of the asset.'),
+    .describe('La razón detallada para sugerir la eliminación del activo.'),
 });
 export type SuggestDisposalOutput = z.infer<typeof SuggestDisposalOutputSchema>;
 
@@ -45,15 +45,15 @@ const prompt = ai.definePrompt({
   name: 'suggestDisposalPrompt',
   input: {schema: SuggestDisposalInputSchema},
   output: {schema: SuggestDisposalOutputSchema},
-  prompt: `You are an IT asset management expert. Analyze the following asset details and determine if it should be disposed of.
+  prompt: `Eres un experto en gestión de activos de TI. Analiza los siguientes detalles del activo y determina si debe ser eliminado.
 
-Asset Details: {{{assetDetails}}}
+Detalles del activo: {{{assetDetails}}}
 
-Optional Disposal Reason: {{{disposalReason}}}
+Razón opcional para la eliminación: {{{disposalReason}}}
 
-Consider the purchase date and the typical lifespan of the asset type. Provide a detailed reason for your suggestion.
+Considera la fecha de compra y la vida útil típica del tipo de activo. Proporciona una razón detallada para tu sugerencia.
 
-Output should be in JSON format.
+La salida debe estar en formato JSON.
 `,
 });
 

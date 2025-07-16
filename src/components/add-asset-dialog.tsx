@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -43,10 +44,10 @@ import {
 
 const formSchema = z.object({
   productType: z.enum(productTypes),
-  model: z.string().min(2, "Model must be at least 2 characters."),
-  serialNumber: z.string().min(5, "Serial number must be at least 5 characters."),
+  model: z.string().min(2, "El modelo debe tener al menos 2 caracteres."),
+  serialNumber: z.string().min(5, "El número de serie debe tener al menos 5 caracteres."),
   purchaseDate: z.date({
-    required_error: "A purchase date is required.",
+    required_error: "Se requiere una fecha de compra.",
   }),
 });
 
@@ -75,9 +76,9 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Asset</DialogTitle>
+          <DialogTitle>Añadir Nuevo Activo</DialogTitle>
           <DialogDescription>
-            Enter the details of the new IT asset below.
+            Introduce los detalles del nuevo activo de TI a continuación.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -87,11 +88,11 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
               name="productType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Product Type</FormLabel>
+                  <FormLabel>Tipo de Producto</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a product type" />
+                        <SelectValue placeholder="Selecciona un tipo de producto" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -111,9 +112,9 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
               name="model"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Model</FormLabel>
+                  <FormLabel>Modelo</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., MacBook Pro 14&quot;" {...field} />
+                    <Input placeholder="p. ej., MacBook Pro 14&quot;" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,9 +125,9 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
               name="serialNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Serial Number</FormLabel>
+                  <FormLabel>Número de Serie</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., SN-MBP14-001" {...field} />
+                    <Input placeholder="p. ej., SN-MBP14-001" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -137,7 +138,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
               name="purchaseDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
-                  <FormLabel>Purchase Date</FormLabel>
+                  <FormLabel>Fecha de Compra</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
@@ -149,9 +150,9 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                           )}
                         >
                           {field.value ? (
-                            format(field.value, "PPP")
+                            format(field.value, "PPP", { locale: es })
                           ) : (
-                            <span>Pick a date</span>
+                            <span>Elige una fecha</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -166,6 +167,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                           date > new Date() || date < new Date("1900-01-01")
                         }
                         initialFocus
+                        locale={es}
                       />
                     </PopoverContent>
                   </Popover>
@@ -174,7 +176,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
               )}
             />
             <DialogFooter>
-              <Button type="submit">Add Asset</Button>
+              <Button type="submit">Añadir Activo</Button>
             </DialogFooter>
           </form>
         </Form>
