@@ -1,11 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User as FirebaseUser, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-import { useRouter, usePathname } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { onAuthStateChanged, User as FirebaseUser, signOut as firebaseSignOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+import { useRouter, usePathname } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserData {
   uid: string;
@@ -20,9 +20,13 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  signOut: async () => {},
+});
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -31,23 +35,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        const tokenResult = await firebaseUser.getIdTokenResult();
-        const docRef = doc(db, 'usuarios', firebaseUser.uid);
-        const docSnap = await getDoc(docRef);
+        try {
+            const tokenResult = await firebaseUser.getIdTokenResult();
+            const docRef = doc(db, 'usuarios', firebaseUser.uid);
+            const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const userData = docSnap.data();
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            rol: tokenResult.claims.rol as 'admin' | 'usuario' || 'usuario',
-            nombre: userData.nombre || 'Usuario',
-          });
-        } else {
-            // Manejar el caso donde el usuario de auth existe pero no el documento de firestore
+            if (docSnap.exists()) {
+              const userData = docSnap.data();
+              setUser({
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                rol: tokenResult.claims.rol as 'admin' | 'usuario' || 'usuario',
+                nombre: userData.nombre || 'Usuario',
+              });
+            } else {
+                setUser(null);
+            }
+        } catch (error) {
+            console.error("Error fetching user data:", error);
             setUser(null);
         }
-
       } else {
         setUser(null);
       }
@@ -66,14 +73,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user, loading, pathname, router]);
 
-
   const signOut = async () => {
     await firebaseSignOut(auth);
     setUser(null);
     router.push('/login');
   };
 
-  if (loading || (!user && pathname !== '/login')) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
           <div className="p-8 border rounded-lg shadow-lg bg-card w-full max-w-md">
@@ -97,9 +103,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
-  }
-  return context;
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    }
+    return context;
 };
