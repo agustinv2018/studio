@@ -17,10 +17,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TerminalSquare } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@example.com");
+  const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -39,7 +40,7 @@ export default function LoginPage() {
       toast({
         variant: "destructive",
         title: "Error de inicio de sesión",
-        description: "Las credenciales son incorrectas. Por favor, inténtalo de nuevo.",
+        description: "Las credenciales son incorrectas. Por favor, créalas en la consola de Firebase o regístrate.",
       });
     } finally {
       setIsLoading(false);
@@ -85,10 +86,16 @@ export default function LoginPage() {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
             </Button>
+            <div className="text-center text-sm">
+                ¿No tienes una cuenta?{" "}
+                <Link href="/register" className="underline">
+                    Regístrate
+                </Link>
+            </div>
           </CardFooter>
         </form>
       </Card>
