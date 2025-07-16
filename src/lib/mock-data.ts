@@ -1,0 +1,60 @@
+import type { Asset } from './types';
+
+export const mockAssets: Asset[] = [
+  {
+    id: '1',
+    productType: 'Laptop',
+    model: 'MacBook Pro 14"',
+    serialNumber: 'SN-MBP14-001',
+    purchaseDate: new Date('2022-01-15'),
+    status: 'Active',
+  },
+  {
+    id: '2',
+    productType: 'Monitor',
+    model: 'Dell U2721DE',
+    serialNumber: 'SN-DELL27-002',
+    purchaseDate: new Date('2021-03-20'),
+    status: 'Active',
+  },
+  {
+    id: '3',
+    productType: 'Keyboard',
+    model: 'Logitech MX Keys',
+    serialNumber: 'SN-LOGI-K-003',
+    purchaseDate: new Date('2023-05-10'),
+    status: 'Active',
+  },
+  {
+    id: '4',
+    productType: 'Laptop',
+    model: 'ThinkPad T480s',
+    serialNumber: 'SN-TP480-004',
+    purchaseDate: new Date('2018-06-01'),
+    status: 'Active',
+  },
+  {
+    id: '5',
+    productType: 'Desktop',
+    model: 'HP EliteDesk 800',
+    serialNumber: 'SN-HPED-005',
+    purchaseDate: new Date('2019-11-25'),
+    status: 'Obsolete',
+  },
+    {
+    id: '6',
+    productType: 'Mouse',
+    model: 'Logitech MX Master 3',
+    serialNumber: 'SN-LOGI-M-006',
+    purchaseDate: new Date('2020-08-12'),
+    status: 'Active',
+  },
+  {
+    id: '7',
+    productType: 'Monitor',
+    model: 'LG 27UL850-W',
+    serialNumber: 'SN-LG27-007',
+    purchaseDate: new Date('2019-02-28'),
+    status: 'Active',
+  },
+];
