@@ -6,7 +6,7 @@ export const mockAssets: Asset[] = [
     productType: 'Laptop',
     model: 'MacBook Pro 14"',
     serialNumber: 'SN-MBP14-001',
-    purchaseDate: new Date('2022-01-15'),
+    purchaseDate: new Date('2022-01-15T00:00:00'),
     status: 'Active',
   },
   {
@@ -14,7 +14,7 @@ export const mockAssets: Asset[] = [
     productType: 'Monitor',
     model: 'Dell U2721DE',
     serialNumber: 'SN-DELL27-002',
-    purchaseDate: new Date('2021-03-20'),
+    purchaseDate: new Date('2021-03-20T00:00:00'),
     status: 'Active',
   },
   {
@@ -22,7 +22,7 @@ export const mockAssets: Asset[] = [
     productType: 'Keyboard',
     model: 'Logitech MX Keys',
     serialNumber: 'SN-LOGI-K-003',
-    purchaseDate: new Date('2023-05-10'),
+    purchaseDate: new Date('2023-05-10T00:00:00'),
     status: 'Active',
   },
   {
@@ -30,7 +30,7 @@ export const mockAssets: Asset[] = [
     productType: 'Laptop',
     model: 'ThinkPad T480s',
     serialNumber: 'SN-TP480-004',
-    purchaseDate: new Date('2018-06-01'),
+    purchaseDate: new Date('2018-06-01T00:00:00'),
     status: 'Active',
   },
   {
@@ -38,7 +38,7 @@ export const mockAssets: Asset[] = [
     productType: 'Desktop',
     model: 'HP EliteDesk 800',
     serialNumber: 'SN-HPED-005',
-    purchaseDate: new Date('2019-11-25'),
+    purchaseDate: new Date('2019-11-25T00:00:00'),
     status: 'Obsolete',
   },
     {
@@ -46,7 +46,7 @@ export const mockAssets: Asset[] = [
     productType: 'Mouse',
     model: 'Logitech MX Master 3',
     serialNumber: 'SN-LOGI-M-006',
-    purchaseDate: new Date('2020-08-12'),
+    purchaseDate: new Date('2020-08-12T00:00:00'),
     status: 'Active',
   },
   {
@@ -54,7 +54,7 @@ export const mockAssets: Asset[] = [
     productType: 'Monitor',
     model: 'LG 27UL850-W',
     serialNumber: 'SN-LG27-007',
-    purchaseDate: new Date('2019-02-28'),
+    purchaseDate: new Date('2019-02-28T00:00:00'),
     status: 'Active',
   },
 ];
