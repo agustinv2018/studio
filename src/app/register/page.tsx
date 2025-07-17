@@ -37,15 +37,13 @@ export default function RegisterPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      // Crear documento de usuario en Firestore
       await setDoc(doc(db, "usuarios", user.uid), {
-        nombre: nombre,
-        email: email,
-        rol: rol,
+        nombre,
+        email,
+        rol,
         fechaCreacion: serverTimestamp(),
       });
-      
-      // Aquí se necesitaría una Cloud Function para asignar el custom claim 'rol'.
-      // Por ahora, el rol se guarda en Firestore, pero no se reflejará en el token de autenticación.
       
       toast({
         title: "Registro exitoso",
@@ -61,6 +59,7 @@ export default function RegisterPage() {
         } else if (error.code === 'auth/weak-password') {
             errorMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
         }
+        console.error("Error de registro:", error);
       toast({
         variant: "destructive",
         title: "Error de registro",
@@ -128,6 +127,7 @@ export default function RegisterPage() {
                 onValueChange={(value: "admin" | "usuario") => setRol(value)}
                 className="flex items-center space-x-4"
                 disabled={isLoading}
+                value={rol}
               >
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="usuario" id="r1" />

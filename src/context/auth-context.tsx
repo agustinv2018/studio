@@ -5,7 +5,7 @@ import { onAuthStateChanged, User as FirebaseUser, signOut as firebaseSignOut } 
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { useRouter, usePathname } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TerminalSquare } from "lucide-react";
 
 interface UserData {
   uid: string;
@@ -44,12 +44,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setUser({
                 uid: firebaseUser.uid,
                 email: firebaseUser.email,
-                rol: userData.rol || 'usuario', // Leer el rol desde Firestore
+                rol: userData.rol || 'usuario',
                 nombre: userData.nombre || 'Usuario',
               });
             } else {
-                console.warn(`No se encontró documento de usuario para UID: ${firebaseUser.uid}`);
-                setUser(null);
+                console.warn(`No se encontró documento de usuario para UID: ${firebaseUser.uid}. Creando uno...`);
+                 // Esto puede pasar si un usuario se crea en la consola de Firebase sin documento en Firestore
+                const newUser = {
+                    nombre: firebaseUser.displayName || 'Usuario',
+                    email: firebaseUser.email,
+                    rol: 'usuario',
+                }
+                await setDoc(doc(db, "usuarios", firebaseUser.uid), newUser);
+                setUser({
+                    uid: firebaseUser.uid,
+                    email: firebaseUser.email,
+                    rol: 'usuario',
+                    nombre: firebaseUser.displayName || 'Usuario'
+                });
             }
         } catch (error) {
             console.error("Error al obtener los datos del usuario:", error);
@@ -87,22 +99,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  if (loading || (!user && pathname !== '/login' && pathname !== '/register')) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="p-8 w-full max-w-md">
-              <div className="flex flex-col space-y-3">
-                  <div className="flex justify-center">
-                    <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  </div>
-                  <p className="text-center text-muted-foreground">Cargando datos de sesión...</p>
-              </div>
-          </div>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+        <div className="flex flex-col items-center gap-4">
+            <TerminalSquare className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-muted-foreground">Cargando sesión...</p>
+        </div>
       </div>
     );
+  }
+
+  // Si no hay usuario y no estamos en una página de autenticación,
+  // el efecto anterior se encargará de redirigir, pero podemos mostrar un loader mientras.
+  if (!user && pathname !== '/login' && pathname !== '/register') {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+            <div className="flex flex-col items-center gap-4">
+                <TerminalSquare className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-muted-foreground">Redirigiendo a inicio de sesión...</p>
+            </div>
+        </div>
+      )
   }
 
   return (
