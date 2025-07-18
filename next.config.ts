@@ -1,8 +1,6 @@
 import type {NextConfig} from 'next';
-require('dotenv').config({ path: './.env' });
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -19,7 +17,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // The env block is removed to prevent conflicts and rely solely on dotenv and Next.js's default environment variable handling.
 };
 
 export default nextConfig;
