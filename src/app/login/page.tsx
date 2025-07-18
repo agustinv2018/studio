@@ -20,8 +20,8 @@ import { TerminalSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -30,17 +30,23 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
       toast({
         title: "Inicio de sesión exitoso",
         description: "Bienvenido de nuevo.",
       });
+      router.push("/");
     } catch (error: any) {
+      let msg = "Error al iniciar sesión. Revisa tus credenciales.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          msg = "Credenciales incorrectas. Por favor, inténtalo de nuevo o regístrate.";
+      } else if (error.code === 'auth/invalid-email') {
+          msg = "El formato del correo electrónico no es válido.";
+      }
       toast({
         variant: "destructive",
         title: "Error de inicio de sesión",
-        description: "Credenciales incorrectas. Por favor, regístrate o crea el usuario en la consola de Firebase.",
+        description: msg,
       });
     } finally {
       setIsLoading(false);
@@ -57,7 +63,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>
-            Introduce tu correo electrónico a continuación para acceder a tu cuenta.
+            Introduce tu correo electrónico para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>

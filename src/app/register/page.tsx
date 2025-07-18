@@ -33,14 +33,22 @@ export default function RegisterPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (password.length < 6) {
+      toast({ variant: "destructive", title: "Error", description: "La contraseña debe tener al menos 6 caracteres." });
+      setIsLoading(false);
+      return;
+    }
+    
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
       const user = userCredential.user;
 
-      // Crear documento de usuario en Firestore
       await setDoc(doc(db, "usuarios", user.uid), {
         nombre,
-        email,
+        email: cleanEmail,
         rol,
         fechaCreacion: serverTimestamp(),
       });
@@ -53,17 +61,19 @@ export default function RegisterPage() {
       router.push("/login");
 
     } catch (error: any) {
-        let errorMessage = "Ocurrió un error desconocido. Por favor, inténtalo de nuevo.";
+        let msg = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo.";
         if (error.code === 'auth/email-already-in-use') {
-            errorMessage = "El correo electrónico ya está en uso. Por favor, utiliza otro.";
+            msg = "El correo electrónico ya está en uso. Por favor, utiliza otro.";
         } else if (error.code === 'auth/weak-password') {
-            errorMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+            msg = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+        } else if (error.code === 'auth/invalid-email') {
+            msg = "El formato del correo electrónico no es válido.";
         }
         console.error("Error de registro:", error);
       toast({
         variant: "destructive",
         title: "Error de registro",
-        description: errorMessage,
+        description: msg,
       });
     } finally {
       setIsLoading(false);
@@ -140,7 +150,7 @@ export default function RegisterPage() {
               </RadioGroup>
             </div>
           </CardContent>
-          <CardFooter className="flex-col gap-4">
+          <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
             </Button>
