@@ -1,15 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { onAuthStateChanged, signOut as firebaseSignOut, User as FirebaseUser } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 import { useRouter, usePathname } from "next/navigation";
-import { TerminalSquare } from "lucide-react";
 
 interface UserData {
-  uid: string;
-  email: string;
+  id: string;
+  email: string | null;
   nombre: string;
   rol: "admin" | "usuario";
 }
@@ -33,91 +30,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        try {
-          const ref = doc(db, "usuarios", firebaseUser.uid);
-          const snap = await getDoc(ref);
-
-          if (snap.exists()) {
-            const data = snap.data();
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email || "",
-              nombre: data.nombre || "Usuario",
-              rol: data.rol || "usuario",
-            });
-          } else {
-            // This case handles users created via social providers or directly in the console
-            // without a corresponding Firestore document.
-            const newUser = {
-              nombre: firebaseUser.displayName || "Usuario",
-              email: firebaseUser.email || "",
-              rol: "usuario",
-            };
-            await setDoc(ref, newUser);
-            setUser({
-              uid: firebaseUser.uid,
-              ...newUser
-            });
-          }
-        } catch (error) {
-          console.error("Error getting user data:", error);
-          setUser(null);
-        }
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await fetchUser(session.user.id);
       } else {
         setUser(null);
       }
       setLoading(false);
+    };
+
+    getSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchUser(session.user.id);
+      } else {
+        setUser(null);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
+
+  const fetchUser = async (id: string) => {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (!error && data) {
+      setUser(data);
+    } else {
+      console.error("Error obteniendo usuario:", error);
+    }
+  };
 
   useEffect(() => {
     if (loading) return;
     const isAuthPage = pathname === "/login" || pathname === "/register";
-    if (!user && !isAuthPage) {
-        router.push("/login");
-    }
-    if (user && isAuthPage) {
-        router.push("/");
-    }
+    if (!user && !isAuthPage) router.push("/login");
+    if (user && isAuthPage) router.push("/");
   }, [user, loading, pathname, router]);
 
   const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      router.push("/login");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/login");
   };
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex items-center gap-2">
-            <TerminalSquare className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-muted-foreground">Cargando sesión...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Prevents flicker of content before redirect
-  const isAuthPage = pathname === '/login' || pathname === '/register';
-  if (!user && !isAuthPage) {
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-background">
-            <div className="flex items-center gap-2">
-                <TerminalSquare className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-muted-foreground">Redirigiendo a inicio de sesión...</p>
-            </div>
-        </div>
-    );
-  }
+  if (loading) return <div>Cargando sesión...</div>;
 
   return (
     <AuthContext.Provider value={{ user, loading, signOut }}>
@@ -126,10 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if(context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
-};
+export const useAuth = () => useContext(AuthContext);
+
+export default AuthProvider;
