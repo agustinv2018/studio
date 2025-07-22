@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { PlusCircle, Search, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { PlusCircle, Search, Sparkles } from "lucide-react";
 import type { Asset } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,12 +32,13 @@ export function DashboardPage() {
 
   const isAdmin = user?.rol === "admin";
 
+  // 🔍 Obtener activos
   const fetchAssets = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("activos")
       .select("*")
-      .order("fechaCompra", { ascending: false });
+      .order("fechacompra", { ascending: false });
 
     if (error) {
       console.error("Error fetching assets:", error);
@@ -56,111 +57,128 @@ export function DashboardPage() {
     fetchAssets();
   }, [fetchAssets]);
 
+  // 🔍 Filtro por búsqueda
   const filteredAssets = useMemo(() => {
     return assets.filter(
       (asset) =>
-        asset.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.numeroSerie?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        asset.tipo?.toLowerCase().includes(searchTerm.toLowerCase())
+        asset.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.modelo || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.numeroserie || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.tipo || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [assets, searchTerm]);
 
-  const handleAddAsset = useCallback(
-    async (newAsset: Omit<Asset, "id" | "estado" | "usuarioAlta">) => {
-      if (!user) return;
-      const { error } = await supabase.from("activos").insert({
-        ...newAsset,
-        estado: "activo",
-        usuarioAlta: user.id,
-        fechaAlta: new Date().toISOString(),
+  // ✅ Agregar activo
+  const handleAddAsset = async (newAsset: Omit<Asset, "id" | "estado">) => {
+    if (!user) return;
+    const now = new Date().toISOString();
+
+    try {
+      // Insertar activo
+      const { data, error } = await supabase
+        .from("activos")
+        .insert({
+          ...newAsset,
+          estado: "activo",
+          usuarioalta: user.id,
+          fechaalta: now,
+          updated_at: now,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Insertar en historial
+      await supabase.from("historial").insert({
+        usuario_id: user.id,
+        accion: "alta",
+        tabla: "activos",
+        detalle: JSON.stringify({
+          despues: data,
+          timestamp: now,
+        }),
       });
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo agregar el activo.",
-        });
-        console.error("Error adding asset:", error);
-      } else {
-        toast({ title: "Éxito", description: "Activo agregado." });
-        fetchAssets();
-      }
-    },
-    [toast, user, fetchAssets]
-  );
+      toast({ title: "Éxito", description: "Activo agregado correctamente." });
+      fetchAssets();
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo agregar el activo." });
+    }
+  };
 
-  const handleUpdateAssetStatus = useCallback(
-    async (assetId: string, estado: Asset["estado"], reason?: string) => {
-      const updateData: any = { estado };
-      if (estado === "baja") {
-        updateData.motivoBaja = reason;
-        updateData.fechaBaja = new Date().toISOString();
-        updateData.usuarioBaja = user?.id;
-      }
+  // ✅ Actualizar estado del activo
+  const handleUpdateAssetStatus = async (
+    assetId: string,
+    estado: Asset["estado"],
+    reason?: string
+  ) => {
+    if (!user) return;
+    const now = new Date().toISOString();
 
+    const assetBefore = assets.find((a) => a.id === assetId);
+
+    try {
       const { error } = await supabase
         .from("activos")
-        .update(updateData)
+        .update({
+          estado,
+          motivobaja: estado === "baja" ? reason : null,
+          fechabaja: estado === "baja" ? now : null,
+          usuariobaja: estado === "baja" ? user.id : null,
+          updated_at: now,
+        })
         .eq("id", assetId);
 
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo actualizar el activo.",
-        });
-      } else {
-        toast({
-          title: "Activo Actualizado",
-          description: `Estado: ${estado}.`,
-        });
-        fetchAssets();
-      }
-    },
-    [toast, user, fetchAssets]
-  );
+      if (error) throw error;
 
-  const handleDeleteAsset = useCallback(
-    async (assetId: string) => {
-      const { error } = await supabase.from("activos").delete().eq("id", assetId);
-
-      if (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No se pudo eliminar el activo.",
-        });
-      } else {
-        toast({ title: "Activo Eliminado", variant: "destructive" });
-        fetchAssets();
-      }
-    },
-    [toast, fetchAssets]
-  );
-
-  const handleBulkUpdateStatus = useCallback(async () => {
-    const { error } = await supabase
-      .from("activos")
-      .update({ estado: "obsoleto" })
-      .in("id", suggestedForDisposal);
-
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudieron actualizar los activos.",
+      // Historial
+      await supabase.from("historial").insert({
+        usuario_id: user.id,
+        accion: "modificación",
+        tabla: "activos",
+        detalle: JSON.stringify({
+          antes: assetBefore,
+          despues: { estado, motivobaja: reason },
+          timestamp: now,
+        }),
       });
-    } else {
-      toast({
-        title: "Activos Actualizados",
-        description: `${suggestedForDisposal.length} activos marcados como obsoletos.`,
-      });
-      setSuggestedForDisposal([]);
+
+      toast({ title: "Estado actualizado", description: `Activo marcado como ${estado}` });
       fetchAssets();
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el activo." });
     }
-  }, [suggestedForDisposal, toast, fetchAssets]);
+  };
+
+  // ✅ Eliminar activo
+  const handleDeleteAsset = async (assetId: string) => {
+    const assetBefore = assets.find((a) => a.id === assetId);
+    const now = new Date().toISOString();
+
+    try {
+      const { error } = await supabase.from("activos").delete().eq("id", assetId);
+      if (error) throw error;
+
+      await supabase.from("historial").insert({
+        usuario_id: user.id,
+        accion: "eliminación",
+        tabla: "activos",
+        detalle: JSON.stringify({
+          antes: assetBefore,
+          timestamp: now,
+        }),
+      });
+
+      toast({ title: "Activo eliminado", description: "Se eliminó correctamente." });
+      fetchAssets();
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el activo." });
+    }
+  };
 
   return (
     <>
@@ -170,7 +188,7 @@ export function DashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <CardTitle>Inventario</CardTitle>
-                <CardDescription>Gestiona tu hardware y suministros.</CardDescription>
+                <CardDescription>Gestiona tu hardware y suministros de TI.</CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row items-center gap-2">
                 <div className="relative w-full sm:w-auto">
@@ -199,18 +217,6 @@ export function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {suggestedForDisposal.length > 0 && isAdmin && (
-              <div className="mb-4 rounded-lg border border-accent/50 bg-accent/10 p-4 text-sm flex items-center justify-between">
-                <p>
-                  <Sparkles className="inline-block mr-2 h-4 w-4" />
-                  La IA sugiere marcar <strong>{suggestedForDisposal.length}</strong> activos como obsoletos.
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleBulkUpdateStatus} variant="outline">Marcar Obsoletos</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setSuggestedForDisposal([])}>Descartar</Button>
-                </div>
-              </div>
-            )}
             {isLoading ? (
               <div className="space-y-2">
                 <Skeleton className="h-12 w-full" />
@@ -239,5 +245,4 @@ export function DashboardPage() {
     </>
   );
 }
-
 export default DashboardPage;

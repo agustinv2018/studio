@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
+  const [legajo, setLegajo] = useState("");
   const [rol, setRol] = useState<"admin" | "usuario">("usuario");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -32,22 +33,46 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
+      // 1️⃣ Crear usuario en auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) throw error;
+      const userId = data.user?.id;
+      if (!userId) throw new Error("No se pudo crear el usuario en Auth.");
 
-      // Insertar datos adicionales en la tabla "usuarios"
+      // 2️⃣ Insertar datos adicionales en la tabla "usuarios"
+      const now = new Date().toISOString();
       const { error: dbError } = await supabase.from("usuarios").insert({
-        id: data.user?.id,
+        id: userId,
         nombre,
         email,
         rol,
+        legajo,
+        created_at: now,
+        updated_at: now,
       });
 
       if (dbError) throw dbError;
+
+      // 3️⃣ Registrar acción en historial
+      const { error: historialError } = await supabase.from("historial").insert({
+        usuario_id: userId,
+        accion: "alta",
+        tabla: "usuarios",
+        detalle: JSON.stringify({
+          evento: "Registro de nuevo usuario",
+          nombre,
+          email,
+          rol,
+          legajo,
+          timestamp: now,
+        }),
+      });
+
+      if (historialError) throw historialError;
 
       toast({
         title: "Registro exitoso",
@@ -60,7 +85,7 @@ export default function RegisterPage() {
       toast({
         variant: "destructive",
         title: "Error en registro",
-        description: error.message,
+        description: error.message || "Ocurrió un error inesperado",
       });
     } finally {
       setIsLoading(false);
@@ -85,6 +110,18 @@ export default function RegisterPage() {
                 required
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="legajo">Número de Legajo</Label>
+              <Input
+                id="legajo"
+                type="text"
+                placeholder="Ej: 12345"
+                required
+                value={legajo}
+                onChange={(e) => setLegajo(e.target.value)}
                 disabled={isLoading}
               />
             </div>

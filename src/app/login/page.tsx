@@ -28,20 +28,54 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // 1️⃣ Autenticación con Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast({ title: "Bienvenido", description: "Has iniciado sesión correctamente" });
-      router.push("/");
+      const userId = data.user?.id;
+      if (!userId) throw new Error("No se pudo obtener el ID del usuario.");
+
+      // 2️⃣ Actualizar última sesión
+      const { error: updateError } = await supabase
+        .from("usuarios")
+        .update({
+          ultima_sesion: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId);
+
+      if (updateError) throw updateError;
+
+      // 3️⃣ Registrar en historial (JSON con detalles)
+      const { error: historialError } = await supabase.from("historial").insert({
+        usuario_id: userId,
+        accion: "login",
+        tabla: "usuarios",
+        detalle: JSON.stringify({
+          evento: "Inicio de sesión",
+          email: email,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (historialError) throw historialError;
+
+      toast({
+        title: "Bienvenido",
+        description: "Has iniciado sesión correctamente",
+      });
+
+      router.push("/"); // Redirigir al dashboard
     } catch (error: any) {
+      console.error("Error en login:", error);
       toast({
         variant: "destructive",
         title: "Error de inicio de sesión",
-        description: error.message,
+        description: error.message || "Ocurrió un error inesperado",
       });
     } finally {
       setIsLoading(false);
