@@ -10,10 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout código (opcional)
-        uses: actions/checkout@v3
-
-      - name: Ejecutar SQL en Supabase
+      - name: Ejecutar función en Supabase
         run: |
           echo "Ejecutando función procesar_bajas_pendientes..."
           curl -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/procesar_bajas_pendientes" \
@@ -23,7 +20,4 @@ jobs:
           --data '{}'
 
       - name: Confirmación
-        run: echo "Proceso completado correctamente."
-
-      - name: Confirmación manual
         run: echo "Proceso completado correctamente."
