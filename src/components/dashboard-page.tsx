@@ -48,7 +48,21 @@ export function DashboardPage() {
         description: "No se pudieron cargar los activos.",
       });
     } else {
-      setAssets(data || []);
+      const mappedAssets: Asset[] = (data || []).map((d: any) => ({
+        id: d.id,
+        nombre: d.nombre,
+        tipo: d.tipo,
+        modelo: d.modelo,
+        numeroSerie: d.numeroserie,
+        fechaCompra: d.fechacompra ? new Date(d.fechacompra) : null,
+        estado: d.estado,
+        motivoBaja: d.motivobaja,
+        fechaBaja: d.fechabaja ? new Date(d.fechabaja) : null,
+        usuarioAlta: d.usuarioalta,
+        usuarioBaja: d.usuariobaja,
+        documentUrl: d.document_url,
+      }));
+      setAssets(mappedAssets);
     }
     setIsLoading(false);
   }, [toast]);
@@ -63,33 +77,43 @@ export function DashboardPage() {
       (asset) =>
         asset.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (asset.modelo || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (asset.numeroserie || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (asset.numeroSerie || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (asset.tipo || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [assets, searchTerm]);
 
-  // ✅ Agregar activo
+  // ✅ Agregar activo con logs detallados
   const handleAddAsset = async (newAsset: Omit<Asset, "id" | "estado">) => {
     if (!user) return;
     const now = new Date().toISOString();
 
     try {
-      // Insertar activo
+      const { nombre, tipo, modelo, numeroSerie, fechaCompra } = newAsset;
+
+      const payload = {
+        nombre,
+        tipo,
+        modelo,
+        numeroserie: numeroSerie,
+        fechacompra: fechaCompra ? fechaCompra.toISOString() : null,
+        estado: "activo",
+        usuarioalta: user.id,
+        fechaalta: now,
+        updated_at: now,
+      };
+
+      console.log("✅ Insertando activo:", payload);
+
       const { data, error } = await supabase
         .from("activos")
-        .insert({
-          ...newAsset,
-          estado: "activo",
-          usuarioalta: user.id,
-          fechaalta: now,
-          updated_at: now,
-        })
+        .insert(payload)
         .select()
         .single();
 
       if (error) throw error;
 
-      // Insertar en historial
+      console.log("✅ Activo insertado correctamente:", data);
+
       await supabase.from("historial").insert({
         usuario_id: user.id,
         accion: "alta",
@@ -103,12 +127,16 @@ export function DashboardPage() {
       toast({ title: "Éxito", description: "Activo agregado correctamente." });
       fetchAssets();
     } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo agregar el activo." });
+      console.error("❌ Error en handleAddAsset:", error, JSON.stringify(error, null, 2));
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo agregar el activo.",
+      });
     }
   };
 
-  // ✅ Actualizar estado del activo
+  // ✅ Actualizar estado
   const handleUpdateAssetStatus = async (
     assetId: string,
     estado: Asset["estado"],
@@ -133,13 +161,16 @@ export function DashboardPage() {
 
       if (error) throw error;
 
-      // Historial
       await supabase.from("historial").insert({
         usuario_id: user.id,
         accion: "modificación",
         tabla: "activos",
         detalle: JSON.stringify({
-          antes: assetBefore,
+          antes: {
+            ...assetBefore,
+            fechaCompra: assetBefore?.fechaCompra?.toISOString(),
+            fechaBaja: assetBefore?.fechaBaja?.toISOString(),
+          },
           despues: { estado, motivobaja: reason },
           timestamp: now,
         }),
@@ -148,8 +179,12 @@ export function DashboardPage() {
       toast({ title: "Estado actualizado", description: `Activo marcado como ${estado}` });
       fetchAssets();
     } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el activo." });
+      console.error("❌ Error en handleUpdateAssetStatus:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo actualizar el activo.",
+      });
     }
   };
 
@@ -167,7 +202,11 @@ export function DashboardPage() {
         accion: "eliminación",
         tabla: "activos",
         detalle: JSON.stringify({
-          antes: assetBefore,
+          antes: {
+            ...assetBefore,
+            fechaCompra: assetBefore?.fechaCompra?.toISOString(),
+            fechaBaja: assetBefore?.fechaBaja?.toISOString(),
+          },
           timestamp: now,
         }),
       });
@@ -175,8 +214,12 @@ export function DashboardPage() {
       toast({ title: "Activo eliminado", description: "Se eliminó correctamente." });
       fetchAssets();
     } catch (error: any) {
-      console.error(error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el activo." });
+      console.error("❌ Error en handleDeleteAsset:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo eliminar el activo.",
+      });
     }
   };
 
@@ -207,7 +250,10 @@ export function DashboardPage() {
                       <Sparkles className="mr-2 h-4 w-4" />
                       Sugerir Bajas con IA
                     </Button>
-                    <Button onClick={() => setAddAssetOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+                    <Button
+                      onClick={() => setAddAssetOpen(true)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
                       <PlusCircle className="mr-2 h-4 w-4" />
                       Añadir Activo
                     </Button>
@@ -245,4 +291,5 @@ export function DashboardPage() {
     </>
   );
 }
+
 export default DashboardPage;

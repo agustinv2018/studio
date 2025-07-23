@@ -64,9 +64,9 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        nombre: "",
-        modelo: "",
-        numeroSerie: "",
+      nombre: "",
+      modelo: "",
+      numeroSerie: "",
     }
   });
 
@@ -161,7 +161,8 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
+                          type="button"
+                          variant="outline"
                           className={cn(
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
@@ -170,7 +171,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                           {field.value ? (
                             format(field.value, "PPP", { locale: es })
                           ) : (
-                            <span>Elige una fecha</span>
+                            <span>Selecciona una fecha</span>
                           )}
                           <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
@@ -179,12 +180,11 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
+                        selected={field.value || undefined}
+                        onSelect={(date) => field.onChange(date)}
                         disabled={(date) =>
                           date > new Date() || date < new Date("1900-01-01")
                         }
-                        initialFocus
                         locale={es}
                       />
                     </PopoverContent>
@@ -193,14 +193,15 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                 </FormItem>
               )}
             />
-             <FormField
+
+            <FormField
               control={form.control}
               name="document"
               render={({ field }) => (
                 <FormItem>
                   <Label>Adjuntar documento</Label>
-                  <Input 
-                    type="file" 
+                  <Input
+                    type="file"
                     onChange={(e) => field.onChange(e.target.files ? e.target.files[0] : null)}
                   />
                   <FormMessage />
