@@ -1,18 +1,24 @@
 name: Ejecutar proceso de bajas pendientes
 
 on:
+  # 🔹 Permite ejecución manual desde la interfaz de GitHub Actions
+  workflow_dispatch:
+
+  # 🔹 Ejecuta automáticamente cada 10 minutos
   schedule:
-    - cron: "*/10 * * * *" # Cada 10 minutos
-  workflow_dispatch: # Permite ejecución manual desde GitHub Actions
+    - cron: "*/10 * * * *"
 
 jobs:
   ejecutar-funcion-supabase:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Ejecutar función en Supabase
+      - name: Checkout código (opcional)
+        uses: actions/checkout@v3
+
+      - name: Ejecutar función procesar_bajas_pendientes en Supabase
         run: |
-          echo "Ejecutando función procesar_bajas_pendientes..."
+          echo "✅ Ejecutando función procesar_bajas_pendientes..."
           curl -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/procesar_bajas_pendientes" \
           -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
@@ -20,4 +26,7 @@ jobs:
           --data '{}'
 
       - name: Confirmación
-        run: echo "Proceso completado correctamente."
+        run: echo "✅ Proceso completado correctamente."
+
+      - name: Confirmación
+        run: echo "✅ Proceso completado correctamente."
