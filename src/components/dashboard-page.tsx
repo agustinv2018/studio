@@ -32,7 +32,7 @@ export function DashboardPage() {
 
   const isAdmin = user?.rol === "admin";
 
-  // 🔍 Obtener activos
+  // ✅ Obtener activos
   const fetchAssets = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
@@ -41,11 +41,11 @@ export function DashboardPage() {
       .order("fechacompra", { ascending: false });
 
     if (error) {
-      console.error("Error fetching assets:", error);
+      console.error("❌ Error fetching assets:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudieron cargar los activos.",
+        description: error.message || "No se pudieron cargar los activos.",
       });
     } else {
       const mappedAssets: Asset[] = (data || []).map((d: any) => ({
@@ -82,7 +82,7 @@ export function DashboardPage() {
     );
   }, [assets, searchTerm]);
 
-  // ✅ Agregar activo con logs detallados
+  // ✅ Agregar activo
   const handleAddAsset = async (newAsset: Omit<Asset, "id" | "estado">) => {
     if (!user) return;
     const now = new Date().toISOString();
@@ -97,7 +97,7 @@ export function DashboardPage() {
         numeroserie: numeroSerie,
         fechacompra: fechaCompra ? fechaCompra.toISOString() : null,
         estado: "activo",
-        usuarioalta: user.id,
+        usuarioalta: user.id, // RLS importante
         fechaalta: now,
         updated_at: now,
       };
@@ -127,11 +127,11 @@ export function DashboardPage() {
       toast({ title: "Éxito", description: "Activo agregado correctamente." });
       fetchAssets();
     } catch (error: any) {
-      console.error("❌ Error en handleAddAsset:", error, JSON.stringify(error, null, 2));
+      console.error("❌ Error en handleAddAsset:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo agregar el activo.",
+        description: error.message || "No se pudo agregar el activo.",
       });
     }
   };
@@ -183,7 +183,7 @@ export function DashboardPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo actualizar el activo.",
+        description: error.message || "No se pudo actualizar el activo.",
       });
     }
   };
@@ -218,7 +218,7 @@ export function DashboardPage() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo eliminar el activo.",
+        description: error.message || "No se pudo eliminar el activo.",
       });
     }
   };
@@ -244,21 +244,21 @@ export function DashboardPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 w-full sm:w-auto">
+                  {isAdmin && (
                     <Button variant="outline" onClick={() => setAiDisposalOpen(true)}>
                       <Sparkles className="mr-2 h-4 w-4" />
                       Sugerir Bajas con IA
                     </Button>
-                    <Button
-                      onClick={() => setAddAssetOpen(true)}
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Añadir Activo
-                    </Button>
-                  </div>
-                )}
+                  )}
+                  <Button
+                    onClick={() => setAddAssetOpen(true)}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Activo
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -276,6 +276,7 @@ export function DashboardPage() {
                 onDelete={handleDeleteAsset}
                 highlightedRows={suggestedForDisposal}
                 isAdmin={isAdmin}
+                currentUserId={user?.id}
               />
             )}
           </CardContent>

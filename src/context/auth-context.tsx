@@ -91,6 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const updateLastSession = async (id: string) => {
+  await supabase.from("usuarios").update({ ultima_sesion: new Date().toISOString() }).eq("id", id);
+};
+
+
 export const useAuth = () => useContext(AuthContext);
 
 export default AuthProvider;

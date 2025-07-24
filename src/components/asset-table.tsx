@@ -26,7 +26,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "./ui/skeleton";
 import { Textarea } from "./ui/textarea";
@@ -39,28 +48,41 @@ type AssetTableProps = {
   onDelete: (assetId: string) => void;
   highlightedRows?: string[];
   isAdmin: boolean;
+  currentUserId: string;
 };
 
-export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows = [], isAdmin }: AssetTableProps) {
+export function AssetTable({
+  assets,
+  onUpdateStatus,
+  onDelete,
+  highlightedRows = [],
+  isAdmin,
+  currentUserId,
+}: AssetTableProps) {
   const [aiSuggestion, setAiSuggestion] = useState<SuggestDisposalOutput | null>(null);
   const [isSuggestionLoading, setSuggestionLoading] = useState(false);
   const [isAlertOpen, setAlertOpen] = useState(false);
   const [isDisposalAlertOpen, setIsDisposalAlertOpen] = useState(false);
   const [disposalReason, setDisposalReason] = useState("");
   const [assetForDisposal, setAssetForDisposal] = useState<Asset | null>(null);
+  const [aiTargetId, setAiTargetId] = useState<string | null>(null);
 
   const { toast } = useToast();
 
   const handleGetAiSuggestion = async (asset: Asset) => {
     setSuggestionLoading(true);
     setAiSuggestion(null);
+    setAiTargetId(asset.id);
     setAlertOpen(true);
     try {
       const suggestion = await suggestDisposal({
-        assetDetails: `Producto: ${asset.tipo}, Modelo: ${asset.modelo}, Fecha de compra: ${asset.fechaCompra.toISOString()}`,
+        assetDetails: `Producto: ${asset.tipo}, Modelo: ${asset.modelo}, Fecha de compra: ${
+          asset.fechaCompra ? asset.fechaCompra.toISOString() : "Desconocida"
+        }`,
       });
       setAiSuggestion(suggestion);
     } catch (error) {
+      console.error("Error en AI Suggestion:", error);
       toast({
         variant: "destructive",
         title: "Falló la sugerencia de IA",
@@ -75,41 +97,45 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
   const openDisposalDialog = (asset: Asset) => {
     setAssetForDisposal(asset);
     setIsDisposalAlertOpen(true);
-  }
+  };
 
   const handleConfirmDisposal = () => {
     if (assetForDisposal && disposalReason) {
-      onUpdateStatus(assetForDisposal.id, 'baja', disposalReason);
+      onUpdateStatus(assetForDisposal.id, "baja", disposalReason);
       setIsDisposalAlertOpen(false);
       setDisposalReason("");
       setAssetForDisposal(null);
     } else {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Se requiere un motivo de baja."
-        })
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Se requiere un motivo de baja.",
+      });
     }
-  }
+  };
 
   const closeAlert = () => {
     setAlertOpen(false);
     setAiSuggestion(null);
-  }
+    setAiTargetId(null);
+  };
 
   const getStatusVariant = (status: AssetStatus) => {
     switch (status) {
-      case 'activo':
-        return 'secondary';
-      case 'obsoleto':
-        return 'outline';
-      case 'baja':
-        return 'destructive';
+      case "activo":
+        return "secondary";
+      case "obsoleto":
+        return "outline";
+      case "baja":
+        return "destructive";
       default:
-        return 'default';
+        return "default";
     }
-  }
+  };
 
+  const canEdit = (asset: Asset) => {
+    return isAdmin || asset.usuarioAlta === currentUserId;
+  };
 
   return (
     <>
@@ -119,21 +145,25 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
             <TableRow>
               <TableHead>Estado</TableHead>
               <TableHead>Nombre</TableHead>
-              <TableHead>Tipo de Producto</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Modelo</TableHead>
-              <TableHead>Número de Serie</TableHead>
+              <TableHead>Serie</TableHead>
               <TableHead>Fecha de Compra</TableHead>
-              {isAdmin && (
-                <TableHead>
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              )}
+              <TableHead>
+                <span className="sr-only">Acciones</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {assets.length > 0 ? (
               assets.map((asset) => (
-                <TableRow key={asset.id} className={cn(highlightedRows.includes(asset.id) && "bg-accent/20", asset.estado === 'baja' && 'opacity-50')}>
+                <TableRow
+                  key={asset.id}
+                  className={cn(
+                    highlightedRows.includes(asset.id) && "bg-accent/20",
+                    asset.estado === "baja" && "opacity-50"
+                  )}
+                >
                   <TableCell>
                     <Badge variant={getStatusVariant(asset.estado)} className="capitalize">
                       {asset.estado}
@@ -143,45 +173,66 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
                   <TableCell>{asset.tipo}</TableCell>
                   <TableCell>{asset.modelo}</TableCell>
                   <TableCell>{asset.numeroSerie}</TableCell>
-                  <TableCell>{format(asset.fechaCompra, "PPP", { locale: es })}</TableCell>
-                  {isAdmin && (
-                    <TableCell>
+                  <TableCell>
+                    {asset.fechaCompra
+                      ? format(asset.fechaCompra, "PPP", { locale: es })
+                      : "Sin fecha"}
+                  </TableCell>
+                  <TableCell>
+                    {(isAdmin || canEdit(asset)) && asset.estado !== "baja" && (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost" disabled={asset.estado === 'baja'}>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
                             <span className="sr-only">Alternar menú</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleGetAiSuggestion(asset)}>
-                            <Bot className="mr-2 h-4 w-4" />
-                            Sugerencia de IA
-                          </DropdownMenuItem>
+
+                          {isAdmin && (
+                            <DropdownMenuItem onClick={() => handleGetAiSuggestion(asset)}>
+                              <Bot className="mr-2 h-4 w-4" />
+                              Sugerencia de IA
+                            </DropdownMenuItem>
+                          )}
+
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => onUpdateStatus(asset.id, 'obsoleto')} disabled={asset.estado === 'obsoleto'}>
+
+                          <DropdownMenuItem
+                            onClick={() => onUpdateStatus(asset.id, "obsoleto")}
+                            disabled={asset.estado === "obsoleto"}
+                          >
                             <Archive className="mr-2 h-4 w-4" />
                             Marcar como Obsoleto
                           </DropdownMenuItem>
+
                           <DropdownMenuItem onClick={() => openDisposalDialog(asset)}>
-                              <ArrowDownCircle className="mr-2 h-4 w-4" />
-                              Dar de baja
+                            <ArrowDownCircle className="mr-2 h-4 w-4" />
+                            Dar de baja
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10" onClick={() => onDelete(asset.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Eliminar
-                          </DropdownMenuItem>
+
+                          {isAdmin && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                onClick={() => onDelete(asset.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </TableCell>
-                  )}
+                    )}
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 7 : 6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No se encontraron activos.
                 </TableCell>
               </TableRow>
@@ -190,6 +241,7 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
         </Table>
       </div>
 
+      {/* AI Suggestion Dialog */}
       <AlertDialog open={isAlertOpen} onOpenChange={setAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -207,64 +259,72 @@ export function AssetTable({ assets, onUpdateStatus, onDelete, highlightedRows =
                 <>
                   <p className="font-bold text-lg mt-4">
                     Sugerencia:{" "}
-                    <span className={cn(aiSuggestion.shouldDispose ? "text-destructive" : "text-green-600")}>
+                    <span
+                      className={cn(
+                        aiSuggestion.shouldDispose ? "text-destructive" : "text-green-600"
+                      )}
+                    >
                       {aiSuggestion.shouldDispose ? "Eliminar Activo" : "Conservar Activo"}
                     </span>
                   </p>
                   <p className="mt-2 text-foreground">{aiSuggestion.reason}</p>
                 </>
-              ) : "No hay sugerencia disponible."}
+              ) : (
+                "No hay sugerencia disponible."
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={closeAlert}>Cerrar</AlertDialogCancel>
-            {aiSuggestion?.shouldDispose && (
-               <AlertDialogAction asChild>
-                <Button onClick={() => {
-                  const assetToUpdate = assets.find(a => a.modelo === aiSuggestion.reason.split("Modelo: ")[1]?.split(",")[0]);
-                  if(assetToUpdate) {
-                    onUpdateStatus(assetToUpdate.id, 'obsoleto');
-                  }
+            {aiSuggestion?.shouldDispose && aiTargetId && (
+              <AlertDialogAction
+                asChild
+                onClick={() => {
+                  onUpdateStatus(aiTargetId, "obsoleto");
                   closeAlert();
-                }}>
-                  Marcar como Obsoleto
-                </Button>
+                }}
+              >
+                <Button>Marcar como Obsoleto</Button>
               </AlertDialogAction>
             )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Disposal Dialog */}
       <AlertDialog open={isDisposalAlertOpen} onOpenChange={setIsDisposalAlertOpen}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Dar de baja activo</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Para dar de baja el activo "{assetForDisposal?.nombre}", por favor, proporciona un motivo y adjunta el acta de baja.
-                </AlertDialogDescription>
-            </AlertDialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="grid w-full gap-1.5">
-                    <Label htmlFor="disposalReason">Motivo de baja (obligatorio)</Label>
-                    <Textarea 
-                        id="disposalReason" 
-                        placeholder="Escribe el motivo aquí..." 
-                        value={disposalReason}
-                        onChange={(e) => setDisposalReason(e.target.value)}
-                        rows={3}
-                    />
-                </div>
-                <div className="grid w-full gap-1.5">
-                    <Label htmlFor="disposalDocument">Adjuntar acta de baja</Label>
-                    <Input id="disposalDocument" type="file" />
-                </div>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Dar de baja activo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para dar de baja el activo "{assetForDisposal?.nombre}", por favor, proporciona un
+              motivo y adjunta el acta de baja.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid w-full gap-1.5">
+              <Label htmlFor="disposalReason">Motivo de baja (obligatorio)</Label>
+              <Textarea
+                id="disposalReason"
+                placeholder="Escribe el motivo aquí..."
+                value={disposalReason}
+                onChange={(e) => setDisposalReason(e.target.value)}
+                rows={3}
+              />
             </div>
-            <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => setIsDisposalAlertOpen(false)}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleConfirmDisposal}>Confirmar baja</AlertDialogAction>
-            </AlertDialogFooter>
+            <div className="grid w-full gap-1.5">
+              <Label htmlFor="disposalDocument">Adjuntar acta de baja</Label>
+              <Input id="disposalDocument" type="file" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDisposalAlertOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDisposal}>Confirmar baja</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
   );
 }
+
+export default AssetTable

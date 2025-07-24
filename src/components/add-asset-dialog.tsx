@@ -41,23 +41,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "./ui/label";
 
 const formSchema = z.object({
   nombre: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   tipo: z.enum(productTypes),
   modelo: z.string().min(2, "El modelo debe tener al menos 2 caracteres."),
   numeroSerie: z.string().min(5, "El número de serie debe tener al menos 5 caracteres."),
-  fechaCompra: z.date({
-    required_error: "Se requiere una fecha de compra.",
-  }),
-  document: z.any().optional(),
+  fechaCompra: z.date({ required_error: "Se requiere una fecha de compra." }),
+  document: z.any().optional(), // No se usa aún
 });
 
 type AddAssetDialogProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddAsset: (asset: Omit<Asset, 'id' | 'estado' | 'fechaBaja' | 'motivoBaja' | 'usuarioBaja'>) => void;
+  onAddAsset: (
+    asset: Omit<Asset, "id" | "estado" | "fechaBaja" | "motivoBaja" | "usuarioBaja" | "fechaBaja" | "documentUrl">
+  ) => void;
 };
 
 export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDialogProps) {
@@ -67,7 +66,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
       nombre: "",
       modelo: "",
       numeroSerie: "",
-    }
+    },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
@@ -101,6 +100,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="tipo"
@@ -125,6 +125,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="modelo"
@@ -132,12 +133,13 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                 <FormItem>
                   <FormLabel>Modelo</FormLabel>
                   <FormControl>
-                    <Input placeholder="p. ej., MacBook Pro 14&quot;" {...field} />
+                    <Input placeholder='p. ej., MacBook Pro 14"' {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="numeroSerie"
@@ -151,6 +153,7 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="fechaCompra"
@@ -194,7 +197,8 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
               )}
             />
 
-            <FormField
+            {/* Campo de documento no utilizado aún */}
+            {/* <FormField
               control={form.control}
               name="document"
               render={({ field }) => (
@@ -207,7 +211,8 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
+
             <DialogFooter>
               <Button type="submit">Añadir Activo</Button>
             </DialogFooter>
@@ -217,3 +222,5 @@ export function AddAssetDialog({ isOpen, onOpenChange, onAddAsset }: AddAssetDia
     </Dialog>
   );
 }
+
+export default AddAssetDialog;
