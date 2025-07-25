@@ -32,7 +32,7 @@ export function DashboardPage() {
 
   const isAdmin = user?.rol === "admin";
 
-  // ✅ Obtener activos
+  /** ✅ Obtener activos desde Supabase */
   const fetchAssets = useCallback(async () => {
     setIsLoading(true);
     const { data, error } = await supabase
@@ -60,7 +60,7 @@ export function DashboardPage() {
         fechaBaja: d.fechabaja ? new Date(d.fechabaja) : null,
         usuarioAlta: d.usuarioalta,
         usuarioBaja: d.usuariobaja,
-        documentUrl: d.document_url,
+        documentUrl: d.disposal_doc_url || null, // ✅ Aquí la URL del acta
       }));
       setAssets(mappedAssets);
     }
@@ -71,7 +71,7 @@ export function DashboardPage() {
     fetchAssets();
   }, [fetchAssets]);
 
-  // 🔍 Filtro por búsqueda
+  /** 🔍 Filtro de búsqueda */
   const filteredAssets = useMemo(() => {
     return assets.filter(
       (asset) =>
@@ -82,7 +82,7 @@ export function DashboardPage() {
     );
   }, [assets, searchTerm]);
 
-  // ✅ Agregar activo
+  /** ✅ Agregar activo */
   const handleAddAsset = async (newAsset: Omit<Asset, "id" | "estado">) => {
     if (!user) return;
     const now = new Date().toISOString();
@@ -97,12 +97,10 @@ export function DashboardPage() {
         numeroserie: numeroSerie,
         fechacompra: fechaCompra ? fechaCompra.toISOString() : null,
         estado: "activo",
-        usuarioalta: user.id, // RLS importante
+        usuarioalta: user.id,
         fechaalta: now,
         updated_at: now,
       };
-
-      console.log("✅ Insertando activo:", payload);
 
       const { data, error } = await supabase
         .from("activos")
@@ -111,8 +109,6 @@ export function DashboardPage() {
         .single();
 
       if (error) throw error;
-
-      console.log("✅ Activo insertado correctamente:", data);
 
       await supabase.from("historial").insert({
         usuario_id: user.id,
@@ -136,7 +132,7 @@ export function DashboardPage() {
     }
   };
 
-  // ✅ Actualizar estado
+  /** ✅ Actualizar estado */
   const handleUpdateAssetStatus = async (
     assetId: string,
     estado: Asset["estado"],
@@ -188,7 +184,7 @@ export function DashboardPage() {
     }
   };
 
-  // ✅ Eliminar activo
+  /** ✅ Eliminar activo */
   const handleDeleteAsset = async (assetId: string) => {
     const assetBefore = assets.find((a) => a.id === assetId);
     const now = new Date().toISOString();
@@ -276,7 +272,8 @@ export function DashboardPage() {
                 onDelete={handleDeleteAsset}
                 highlightedRows={suggestedForDisposal}
                 isAdmin={isAdmin}
-                currentUserId={user?.id}
+                fetchAssets={fetchAssets}
+                user={user}
               />
             )}
           </CardContent>
