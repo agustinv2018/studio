@@ -36,11 +36,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
-import { Skeleton } from "./ui/skeleton";
-import { Textarea } from "./ui/textarea";
-import { Label } from "./ui/label";
-import { Input } from "./ui/input";
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 type AssetTableProps = {
   assets: Asset[];

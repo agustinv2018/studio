@@ -2,7 +2,8 @@
 
 import { Header } from "@/components/layout/header";
 import { useAuth } from "@/context/auth-context";
-import { DashboardPage } from "@/components/dashboard-page";
+import DashboardPage from "@/components/dashboard/dashboard-page";
+
 
 export default function Home() {
   const { user } = useAuth();

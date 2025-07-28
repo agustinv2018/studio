@@ -1,55 +1,32 @@
-// src/ai/flows/prompt-disposal.ts
-'use server';
+"use server";
 
-/**
- * @fileOverview Un flujo para sugerir activos para su eliminación basándose en una indicación.
- *
- * - disposeAssetsFromPrompt - Una función que sugiere activos para su eliminación basándose en una indicación.
- * - DisposeAssetsFromPromptInput - El tipo de entrada para la función disposeAssetsFromPrompt.
- * - DisposeAssetsFromPromptOutput - El tipo de retorno para la función disposeAssetsFromPrompt.
- */
+import { z } from "zod";
+import { defineFlow, openai } from "genkit";
+import { SuggestDisposalOutputSchema } from "./suggest-disposal";
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+export const disposeAssetsFromPrompt = defineFlow({
+  name: "dispose-assets-from-prompt",
+  inputSchema: z.string(),
+  outputSchema: SuggestDisposalOutputSchema,
+  handler: async (prompt) => {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Sos un experto en IT y gestión de activos. Tu tarea es analizar activos que podrían darse de baja según el criterio del usuario.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
 
-const DisposeAssetsFromPromptInputSchema = z.object({
-  prompt: z.string().describe('Una descripción de los atributos de los activos a eliminar.'),
-  assets: z.array(z.record(z.any())).describe('La lista de activos a evaluar.'),
-});
-export type DisposeAssetsFromPromptInput = z.infer<typeof DisposeAssetsFromPromptInputSchema>;
+    const jsonStart = response.choices[0].message.content?.indexOf("{");
+    const json = response.choices[0].message.content?.slice(jsonStart).trim();
 
-const DisposeAssetsFromPromptOutputSchema = z.array(z.record(z.any())).describe('Los activos sugeridos para su eliminación.');
-export type DisposeAssetsFromPromptOutput = z.infer<typeof DisposeAssetsFromPromptOutputSchema>;
-
-export async function disposeAssetsFromPrompt(input: DisposeAssetsFromPromptInput): Promise<DisposeAssetsFromPromptOutput> {
-  return disposeAssetsFromPromptFlow(input);
-}
-
-const prompt = ai.definePrompt({
-  name: 'disposeAssetsFromPromptPrompt',
-  input: {schema: DisposeAssetsFromPromptInputSchema},
-  output: {schema: DisposeAssetsFromPromptOutputSchema},
-  prompt: `Eres un experto gestor de activos de TI.
-
-Se te proporcionará una lista de activos y una descripción de los atributos de los activos que deben ser eliminados.
-
-Tu trabajo es devolver una lista de activos que coincidan con la descripción.
-
-Descripción: {{{prompt}}}
-
-Activos: {{{assets}}}
-
-Devuelve solo los activos que coincidan con la descripción. No incluyas ninguna otra información.`,
-});
-
-const disposeAssetsFromPromptFlow = ai.defineFlow(
-  {
-    name: 'disposeAssetsFromPromptFlow',
-    inputSchema: DisposeAssetsFromPromptInputSchema,
-    outputSchema: DisposeAssetsFromPromptOutputSchema,
+    return JSON.parse(json || "{}");
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+});

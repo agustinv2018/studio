@@ -13,12 +13,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AssetTable } from "@/components/asset-table";
-import { AddAssetDialog } from "./add-asset-dialog";
-import { AiDisposalPromptDialog } from "./ai-disposal-prompt-dialog";
+import { AssetTable } from "@/components/dashboard/asset-table";
+import { AddAssetDialog } from "@/components/shared/add-asset-dialog";
+import { AiDisposalPromptDialog } from "@/components/dashboard/ai-disposal-prompt-dialog";
+import { disposeAssetsFromPrompt } from "@/ai/flows/prompt-disposal";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth-context";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function DashboardPage() {
   const { user } = useAuth();

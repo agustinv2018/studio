@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/auth-context";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function Header() {
   const { user, signOut, loading } = useAuth();
