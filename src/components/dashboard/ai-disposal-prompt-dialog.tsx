@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import type { Asset } from "@/lib/types";
-import { disposeAssetsFromPrompt } from "@/ai/flows/prompt-disposal";
+
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,10 +45,7 @@ export function AiDisposalPromptDialog({
         fechaCompra: a.fechaCompra ? a.fechaCompra.toISOString() : null,
       }));
 
-      const result = await disposeAssetsFromPrompt({
-        prompt,
-        assets: formattedAssets,
-      });
+      
 
       const suggestedIds = result.map((r: any) => r.id);
       onSuggestDisposal(suggestedIds);
