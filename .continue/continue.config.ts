@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { ContinueConfig } from "continue";
+export interface ContinueConfig {
+  agents: {
+    id: string;
+    name: string;
+    description: string;
+    prompt: string;
+  }[];
+}
 
 export const config: ContinueConfig = {
   agents: [
